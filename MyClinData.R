@@ -30,6 +30,8 @@ ui <- fluidPage(
   )
 )
 
+
+#ELIZBETH was here and she CAN spell (soemtimes)
 server <- function(input, output) {
   
   # Histogram of the Old Faithful Geyser Data ----
