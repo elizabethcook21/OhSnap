@@ -75,6 +75,9 @@ ui <- fluidPage (
                                                         )
                                         )))
                       )
+             ),
+             tabPanel(
+               title = "Graphical Display"
              )
   )
 )
