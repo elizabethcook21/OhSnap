@@ -32,9 +32,7 @@ ui <- fluidPage (
                                      textInput("size", "Size", value = "1200x600"))
                           ),
                           tags$h4("Selected Area"),
-                          verbatimTextOutput("coordstext"),
-                          tags$a(id="remove", href="https://github.com/JesseVent",
-                                 icon("github", "fa-2x"), h4("Jesse Vent"))
+                          verbatimTextOutput("coordstext")
                         ), 
                         mainPanel(      skin = "black",
                                         tags$head(
