@@ -34,32 +34,33 @@ ui <- fluidPage (
                           tags$h4("Selected Area"),
                           verbatimTextOutput("coordstext")
                         ), 
-                        mainPanel(      skin = "black",
-                                        tags$head(
-                                          tags$link(rel  = "stylesheet",
-                                                    type = "text/css",
-                                                    href = "https://fonts.googleapis.com/css?family=Muli|Work+Sans"),
-                                          tags$link(rel  = "stylesheet",
-                                                    type = "text/css",
-                                                    href = "theme.css")
-                                        ),
-                                        fluidRow(column(width = 12,
-                                                        box(width = 12,
-                                                            imageOutput(
-                                                              "image",
-                                                              click = "image_click",
-                                                              hover = hoverOpts(
-                                                                id        = "image_hover",
-                                                                delay     = 500,
-                                                                delayType = "throttle"),
-                                                              brush = brushOpts(
-                                                                id        = "image_brush",
-                                                                fill      = "#F5A623",
-                                                                stroke    = "#F5A623",
-                                                                clip      = FALSE),
-                                                              height = "500px"
-                                                            ),
-                                                            title = "Click & Drag Over Image")
+                        mainPanel(      
+                          skin = "black",
+                          tags$head(
+                            tags$link(rel  = "stylesheet",
+                                      type = "text/css",
+                                      href = "https://fonts.googleapis.com/css?family=Muli|Work+Sans"),
+                            tags$link(rel  = "stylesheet",
+                                      type = "text/css",
+                                      href = "theme.css")
+                            ),
+                          fluidRow(column(width = 12,
+                                          box(width = 12,
+                                              imageOutput(
+                                                "image",
+                                                click = "image_click",
+                                                hover = hoverOpts(
+                                                  id        = "image_hover",
+                                                  delay     = 500,
+                                                  delayType = "throttle"),
+                                                brush = brushOpts(
+                                                  id        = "image_brush",
+                                                  fill      = "#F5A623",
+                                                  stroke    = "#F5A623",
+                                                  clip      = FALSE),
+                                                height = "500px"
+                                                ),
+                                              title = "Click & Drag Over Image")
                                         )),
                                         fluidRow(column(width = 12,
                                                         box(width = 12,
