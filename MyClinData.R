@@ -29,7 +29,9 @@ ui <- fluidPage (
                               placeholder = "No Image"
                             ),
                             tags$div(style  = "font-size:18px;",
-                                     textInput("size", "Size", value = "1200x600"))
+                                     textInput("size", "Size", value = "1200x600")),
+                            actionButton("rotateButton", "Rotate Right 90 Degrees",
+                                         icon("sync"))
                           ),
                           tags$h4("Selected Area"),
                           verbatimTextOutput("coordstext")
@@ -141,6 +143,9 @@ server <- function(input, output, session) {
     return(output)
   })
   
+  observeEvent(input$rotateButton,{
+    image <- image_rotate(image, 90)
+  })
 }
 
 shinyApp(ui, server)
