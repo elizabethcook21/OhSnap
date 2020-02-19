@@ -100,8 +100,11 @@ server <- function(input, output, session) {
   output$image <- renderImage({
     width   <- session$clientData$output_image_width
     height  <- session$clientData$output_image_height
-    img <- image %>% image_resize(input$size) %>%
-      image_write(tempfile(fileext = 'jpg'), format = 'jpg')
+    img <- image %>% image_resize(input$size) 
+    if (!is.null(rv$rotate)){
+      img <- image_rotate(img, 90 * input$rotateButton)
+    }
+    img <- image_write(img, tempfile(fileext = 'jpg'), format = 'jpg') 
     list(src = img, contentType = "image/jpeg")
   })
   
@@ -132,7 +135,7 @@ server <- function(input, output, session) {
   })
   
   observeEvent(input$rotateButton, {
-    image <- image_rotate(image, input$rotateButton[[1]] * 90)
+    rv$rotate = 90
   })
 }
 
