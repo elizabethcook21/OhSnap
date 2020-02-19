@@ -122,19 +122,6 @@ server <- function(input, output, session) {
       coords()}
   })
   
-  output$croppedimage <- renderImage({
-    req(input$image_brush)
-    width   <- session$clientData$output_image_width
-    height  <- session$clientData$output_image_height
-    img <- image %>% image_resize(input$size) %>%
-      image_crop(coords(), repage = FALSE) %>%
-      image_write(tempfile(fileext = 'jpg'), format = 'jpg')
-    if (!is.null(rv$rotate)){
-      image <- image_rotate(image, 90)
-    }
-    list(src = img, contentType = "image/jpeg")
-  })
-  
   output$ocr_text <- renderText({
     req(input$image_brush)
     text   <- image %>% image_resize(input$size) %>%
