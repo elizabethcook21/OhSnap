@@ -30,7 +30,7 @@ ui <- fluidPage (
                             ),
                             tags$div(style  = "font-size:18px;",
                                      textInput("size", "Size", value = "1200x600")),
-                            actionButton("rotateButton", "Rotate Right 90 Degrees",
+                            actionButton("rotateButton", "Rotate Right 90\u00b0",
                                          icon("sync"))
                           ),
                           tags$h4("Selected Area"),
