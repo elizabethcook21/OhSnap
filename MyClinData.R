@@ -66,10 +66,6 @@ ui <- fluidPage (
                                         )),
                                         fluidRow(column(width = 12,
                                                         box(width = 12,
-                                                            imageOutput("croppedimage", height = "500px"), title = "Area Selected")
-                                        )),
-                                        fluidRow(column(width = 12,
-                                                        box(width = 12,
                                                             textOutput("ocr_text"),
                                                             verbatimTextOutput("text_extract"),
                                                             title = "Text Output"
@@ -84,6 +80,8 @@ ui <- fluidPage (
 )
 
 server <- function(input, output, session) {
+  rv <- reactiveValues(data=NULL, rotate = NULL)
+  
   image <- image_read( "testocr.png")
   
   observeEvent(input$upload, {
@@ -131,6 +129,9 @@ server <- function(input, output, session) {
     img <- image %>% image_resize(input$size) %>%
       image_crop(coords(), repage = FALSE) %>%
       image_write(tempfile(fileext = 'jpg'), format = 'jpg')
+    if (!is.null(rv$rotate)){
+      image <- image_rotate(image, 90)
+    }
     list(src = img, contentType = "image/jpeg")
   })
   
@@ -143,8 +144,8 @@ server <- function(input, output, session) {
     return(output)
   })
   
-  observeEvent(input$rotateButton,{
-    image <- image_rotate(image, 90)
+  observeEvent(input$rotateButton, {
+    image <- image_rotate(image, input$rotateButton[[1]] * 90)
   })
 }
 
