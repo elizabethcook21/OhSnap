@@ -30,7 +30,7 @@ ui <- fluidPage (
                             ),
                             tags$div(style  = "font-size:18px;",
                                      textInput("size", "Size", value = "1200x600")),
-                            actionButton("rotateButton", "Rotate Right 90\u00b0",
+                            actionButton("rotateButton", "Rotate Clockwise 90\u00b0",
                                          icon("sync"))
                           ),
                           tags$h4("Selected Area"),
@@ -60,7 +60,7 @@ ui <- fluidPage (
                                                   fill      = "#F5A623",
                                                   stroke    = "#F5A623",
                                                   clip      = FALSE),
-                                                height = "500px"
+                                                height = "auto"
                                                 ),
                                               title = "Click & Drag Over Image")
                                         )),
@@ -80,7 +80,7 @@ ui <- fluidPage (
 )
 
 server <- function(input, output, session) {
-  rv <- reactiveValues(data=NULL, rotate = NULL)
+  rv <- reactiveValues(data=NULL, rotate = NULL, rotatedImage = NULL)
   
   image <- image_read( "testocr.png")
   
@@ -104,6 +104,7 @@ server <- function(input, output, session) {
     if (!is.null(rv$rotate)){
       img <- image_rotate(img, 90 * input$rotateButton)
     }
+    image <- img
     img <- image_write(img, tempfile(fileext = 'jpg'), format = 'jpg') 
     list(src = img, contentType = "image/jpeg")
   })
@@ -116,6 +117,7 @@ server <- function(input, output, session) {
     dy  <- round(input$image_brush$ymin, digits = 2)
     coords <- paste0(w, "x", h, "+", dw, "+", dy)
     return(coords)
+    # "500x300+10+20" – Crop image to 500 by 300 at position 10,20
   })
   
   output$coordstext <- renderText({
@@ -127,7 +129,8 @@ server <- function(input, output, session) {
   
   output$ocr_text <- renderText({
     req(input$image_brush)
-    text   <- image %>% image_resize(input$size) %>%
+    image <- image
+    text   <- image %>% #image_resize(paste(image$width, image$height, sep = "x")) %>%
       image_crop(coords(), repage = FALSE) %>%
       image_ocr()
     output <- text
