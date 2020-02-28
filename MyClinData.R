@@ -14,7 +14,7 @@ ui <- fluidPage (
   ),
   useShinyjs(),
   #shinythemes::themeSelector(),
-  navbarPage(theme = shinytheme("cosmo"), title = "MyClinData", id = 'tabs',
+  navbarPage(theme = shinytheme("flatly"), title = "MyClinData", id = 'tabs',
              tabPanel('Upload Data', value = 'uploadData',
                       sidebarLayout(
                         sidebarPanel(
