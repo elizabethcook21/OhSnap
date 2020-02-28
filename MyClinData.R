@@ -4,6 +4,7 @@ library(tesseract)
 library(shinydashboard)
 library(shinyjs)
 library(shinycssloaders)
+library(shinythemes)
 
 
 ui <- fluidPage (
@@ -12,7 +13,8 @@ ui <- fluidPage (
     tags$link(rel = "icon", type = "image/png", href = "Logo.png")
   ),
   useShinyjs(),
-  navbarPage(title = "MyClinData", id = 'tabs',
+  #shinythemes::themeSelector(),
+  navbarPage(theme = shinytheme("cosmo"), title = "MyClinData", id = 'tabs',
              tabPanel('Upload Data', value = 'uploadData',
                       sidebarLayout(
                         sidebarPanel(
@@ -29,7 +31,7 @@ ui <- fluidPage (
                               placeholder = "No Image"
                             ),
                             tags$div(style  = "font-size:18px;",
-                                     textInput("size", "Size", value = "1200x600")),
+                                     textInput("size", "Size", value = "200x400")),
                             actionButton("rotateButton", "Rotate Clockwise 90\u00b0",
                                          icon("sync"))
                           ),
@@ -82,8 +84,8 @@ ui <- fluidPage (
 server <- function(input, output, session) {
   rv <- reactiveValues(data=NULL, rotate = NULL, rotatedImage = NULL)
   
-  image <- image_read( "testocr.png")
-  
+  image <- image_read("DefaultImage.png")
+    
   observeEvent(input$upload, {
     if (length(input$upload$datapath)) {
       image <<- image_read(input$upload$datapath)
@@ -103,8 +105,10 @@ server <- function(input, output, session) {
     img <- image %>% image_resize(input$size) 
     if (!is.null(rv$rotate)){
       img <- image_rotate(img, 90 * input$rotateButton)
+      info <- image_info(img)
+      #updateTextInput(session, "size", value = paste(info$width, info$height, sep = "x"))
     }
-    image <- img
+    image <<- img
     img <- image_write(img, tempfile(fileext = 'jpg'), format = 'jpg') 
     list(src = img, contentType = "image/jpeg")
   })
