@@ -5,6 +5,7 @@ library(shinydashboard)
 library(shinyjs)
 library(shinycssloaders)
 library(shinythemes)
+library(rhandsontable)
 
 
 ui <- fluidPage (
@@ -50,7 +51,7 @@ ui <- fluidPage (
                             tags$link(rel  = "stylesheet",
                                       type = "text/css",
                                       href = "theme.css")
-                            ),
+                          ),
                           fluidRow(column(width = 12,
                                           box(width = 12,
                                               imageOutput(
@@ -69,20 +70,24 @@ ui <- fluidPage (
                                                 ),
                                               title = "Click & Drag Over Image")
                                         )),
-                                        fluidRow(column(width = 12,
-                                                        box(width = 12,
-                                                            textOutput("ocr_text"),
-                                                            verbatimTextOutput("text_extract"),
-                                                            title = "Text Output"
-                                                        )
-                                        )))
+                          fluidRow(column(width = 12,
+                                          box(width = 12,
+                                              textOutput("ocr_text"),
+                                              verbatimTextOutput("text_extract"),
+                                              title = "Text Output"
+                                          )
+                                        ))
+                          )
                       )
              ),
              tabPanel(
                title = "Verification", value = "verification",
                sidebarLayout(
-                 sidebarPanel("Display the cropped image"),
-                 mainPanel("Display an interactive table with the parsed data")
+                 sidebarPanel(imageOutput("croppedImage")),
+                 mainPanel(rHandsontableOutput("verificationTable"))
+                 # fluidRow(column(width = 5, imageOutput("croppedImage")),
+                 #          column(width = 2),
+                 #          column(width = 5, rHandsontableOutput("verificationTable")))
                )
              ),  tabPanel(
                title = "Graphical Display"
@@ -124,7 +129,7 @@ server <- function(input, output, session) {
     }
     image <<- img
     img <- image_write(img, tempfile(fileext = 'jpg'), format = 'jpg') 
-    list(src = img, contentType = "image/jpeg")
+    list(src = img, contentType = "image/jpeg")  # width = "100%" makes the image fit the size of the mainPanel, but it messes up rotation and tesseract
   })
   
   
@@ -162,6 +167,28 @@ server <- function(input, output, session) {
   
   observeEvent(input$goToVerificationTab,{
     updateTabsetPanel(session, "tabs", selected = "verification")
+  })
+  
+  output$croppedImage = renderImage({
+    croppedImg = image_crop(image, coords(), repage = FALSE)
+    croppedImg = image_write(croppedImg, tempfile(fileext = 'jpg'), format = 'jpg') 
+    list(src = croppedImg, width = "100%", height = "100%", contentType = "image/jpeg", alt = "This is the selected area of the original image")
+  })
+  
+  output$verificationTable <- renderRHandsontable({
+    if (input$testType == "CBC (Complete Blood Count)") {
+      cbc = c("WBC", "RBC", "HGB", "HCT", "MCV", "MCH", "MCHC", "PLT", "RDW-SD", "RDW-CV", "MPV", 
+              "NEUT", "NEUT-abs", "LYMPH", "LYMPH-abs", "MONO", "MONO-abs", "EO", "EO-abs", "BASO", "BASO-abs")
+      values = c()
+      clinDF = data.frame(CBC = cbc)
+    } else if (input$testType == "CMP (Complete Metabolic Panel)") {
+      cmp = c("Na", "K", "Cl", "ECO2", "AGAP", "AHDL", "TBI", "TP", "GLOB", "ALPI", "TGL", 
+              "CHOL", "AST", "ALTI", "ALB", "A/G", "GLUC", "BUN", "CA", "CKE2", "BN/CR")
+      values = c()
+      clinDF = data.frame(CMP = cmp)
+    }
+    if(!is.null(clinDF))
+      rhandsontable(clinDF, rowHeaders = NULL)
   })
 }
 
