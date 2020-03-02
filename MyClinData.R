@@ -36,7 +36,9 @@ ui <- fluidPage (
                                          icon("sync"))
                           ),
                           tags$h4("Selected Area"),
-                          verbatimTextOutput("coordstext")
+                          verbatimTextOutput("coordstext"),
+                          tags$h4("Select Test"),
+                          selectInput(inputId = "testType", label = "Tests:", choices = c("cbc", "test 2"))
                         ), 
                         mainPanel(      
                           skin = "black",
@@ -76,7 +78,8 @@ ui <- fluidPage (
                       )
              ),
              tabPanel(
-               title = "Verification"
+               title = "Verification",
+               fluidRow("tyler")
              ),  tabPanel(
                title = "Graphical Display"
              ),  tabPanel(
@@ -89,6 +92,8 @@ server <- function(input, output, session) {
   rv <- reactiveValues(data=NULL, rotate = NULL, rotatedImage = NULL)
   
   image <- image_read("DefaultImage.png")
+  
+  imageData <- NULL
     
   observeEvent(input$upload, {
     if (length(input$upload$datapath)) {
@@ -109,9 +114,9 @@ server <- function(input, output, session) {
     img <- image %>% image_resize(input$size) 
     if (!is.null(rv$rotate)){
       img <- image_rotate(img, 90 * input$rotateButton)
-      reset(input$rotateButton)
+      rv$rotate = NULL
       info <- image_info(img)
-      #updateTextInput(session, "size", value = paste(info$width, info$height, sep = "x"))
+      updateTextInput(session, "size", value = paste(info$width, info$height, sep = "x"))
     }
     image <<- img
     img <- image_write(img, tempfile(fileext = 'jpg'), format = 'jpg') 
@@ -142,6 +147,7 @@ server <- function(input, output, session) {
     text   <- image %>% #image_resize(paste(image$width, image$height, sep = "x")) %>%
       image_crop(coords(), repage = FALSE) %>%
       image_ocr()
+    imageData <<- text
     output <- text
     return(output)
   })
