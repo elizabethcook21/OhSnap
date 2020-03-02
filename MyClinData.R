@@ -38,7 +38,8 @@ ui <- fluidPage (
                           tags$h4("Selected Area"),
                           verbatimTextOutput("coordstext"),
                           tags$h4("Select Test"),
-                          selectInput(inputId = "testType", label = "Tests:", choices = c("CBC (Complete Blood Count)", "CMP (Complete Metabolic Panel)"))
+                          selectInput(inputId = "testType", label = "Tests:", choices = c("CBC (Complete Blood Count)", "CMP (Complete Metabolic Panel)")),
+                          actionButton("goToVerificationTab", "Next")
                         ), 
                         mainPanel(      
                           skin = "black",
@@ -78,7 +79,7 @@ ui <- fluidPage (
                       )
              ),
              tabPanel(
-               title = "Verification",
+               title = "Verification", value = "verification",
                sidebarLayout(
                  sidebarPanel("Display the cropped image"),
                  mainPanel("Display an interactive table with the parsed data")
@@ -157,6 +158,10 @@ server <- function(input, output, session) {
   
   observeEvent(input$rotateButton, {
     rv$rotate = 90
+  })
+  
+  observeEvent(input$goToVerificationTab,{
+    updateTabsetPanel(session, "tabs", selected = "verification")
   })
 }
 
