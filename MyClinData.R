@@ -38,7 +38,7 @@ ui <- fluidPage (
                           tags$h4("Selected Area"),
                           verbatimTextOutput("coordstext"),
                           tags$h4("Select Test"),
-                          selectInput(inputId = "testType", label = "Tests:", choices = c("cbc", "test 2"))
+                          selectInput(inputId = "testType", label = "Tests:", choices = c("CBC (Complete Blood Count)", "CMP (Complete Metabolic Panel)"))
                         ), 
                         mainPanel(      
                           skin = "black",
@@ -79,7 +79,10 @@ ui <- fluidPage (
              ),
              tabPanel(
                title = "Verification",
-               fluidRow("tyler")
+               sidebarLayout(
+                 sidebarPanel("Display the cropped image"),
+                 mainPanel("Display an interactive table with the parsed data")
+               )
              ),  tabPanel(
                title = "Graphical Display"
              ),  tabPanel(
