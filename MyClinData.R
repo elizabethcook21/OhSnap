@@ -76,7 +76,11 @@ ui <- fluidPage (
                       )
              ),
              tabPanel(
+               title = "Verification"
+             ),  tabPanel(
                title = "Graphical Display"
+             ),  tabPanel(
+               title = "Content"
              )
   )
 )
@@ -105,6 +109,7 @@ server <- function(input, output, session) {
     img <- image %>% image_resize(input$size) 
     if (!is.null(rv$rotate)){
       img <- image_rotate(img, 90 * input$rotateButton)
+      reset(input$rotateButton)
       info <- image_info(img)
       #updateTextInput(session, "size", value = paste(info$width, info$height, sep = "x"))
     }
