@@ -6,6 +6,7 @@ library(shinyjs)
 library(shinycssloaders)
 library(shinythemes)
 library(rhandsontable)
+library(stringr)
 
 
 ui <- fluidPage (
@@ -157,8 +158,9 @@ server <- function(input, output, session) {
       image_crop(coords(), repage = FALSE) %>%
       image_ocr()
     imageData <<- text
-    output <- text
-    return(output)
+    selected_text <- text
+    data <- str_match_all(selected_text, "([A-Za-z]+)[ =]*([0-9.]+)[^\n]*\\[(.*)\\]")
+    return(selected_text)
   })
   
   observeEvent(input$rotateButton, {
