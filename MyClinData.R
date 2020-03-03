@@ -8,6 +8,14 @@ library(shinythemes)
 library(rhandsontable)
 library(stringr)
 
+#as adapted from 'image_ocr' in package:magick
+data_selection_ocr <- function (image, whitelist = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.^%[]/-", HOCR = FALSE, ...) 
+{
+  #assert_image(image)
+  allowed_chars = tesseract(options = list(tessedit_char_whitelist = whitelist))
+  ocr(image, engine = allowed_chars, HOCR = HOCR)
+}
+
 
 ui <- fluidPage (
   tags$head(
@@ -154,12 +162,15 @@ server <- function(input, output, session) {
   output$ocr_text <- renderText({
     req(input$image_brush)
     image <- image
+    print('parsing text')
     text   <- image %>% #image_resize(paste(image$width, image$height, sep = "x")) %>%
       image_crop(coords(), repage = FALSE) %>%
-      image_ocr()
+      data_selection_ocr()#image_ocr()
     imageData <<- text
     selected_text <- text
-    data <- str_match_all(selected_text, "([A-Za-z]+)[ =]*([0-9.]+)[^\n]*\\[(.*)\\]")
+    data <- str_match_all(selected_text, "([A-Za-z-]+)[ -]*([0-9.]+)[^\n]*\\[(.*)\\]")
+    print(selected_text)
+    print(data)
     return(selected_text)
   })
   
