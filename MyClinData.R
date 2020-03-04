@@ -92,14 +92,12 @@ ui <- fluidPage (
              tabPanel(
                title = "Verification", value = "verification",
                sidebarLayout(
-                 sidebarPanel(imageOutput("croppedImage")),
+                 sidebarPanel(imageOutput("croppedImage"),
+                              actionButton("goToGraphsTab", "Next")),
                  mainPanel(rHandsontableOutput("verificationTable"))
-                 # fluidRow(column(width = 5, imageOutput("croppedImage")),
-                 #          column(width = 2),
-                 #          column(width = 5, rHandsontableOutput("verificationTable")))
                )
              ),  tabPanel(
-               title = "Graphical Display"
+               title = "Graphical Display", value = "graphs"
              ),  tabPanel(
                title = "Contact"
              )
@@ -107,7 +105,7 @@ ui <- fluidPage (
 )
 
 server <- function(input, output, session) {
-  rv <- reactiveValues(data=NULL, rotate = NULL, rotatedImage = NULL, parsedData = NULL)
+  rv <- reactiveValues(data=NULL, rotate = NULL, rotatedImage = NULL)
   
   image <- image_read("DefaultImage.png")
   
@@ -169,10 +167,10 @@ server <- function(input, output, session) {
     imageData <<- text
     selected_text <- text
     # data <- str_match_all(selected_text, "([A-Za-z-]+)[\\s-]*([0-9.]+)[^\n]*\\[(.*)\\]")
-    data <- str_match_all(selected_text, "([A-Za-z-]+)[\\s-]*([0-9.]+)[^\n]*")
+    rv$data <- str_match_all(selected_text, "([A-Za-z-]+)[\\s-]*([0-9.]+)[^\n]*")
     print(selected_text)
-    rv$parsedData = data
-    print(rv$parsedData)
+    # rv$parsedData = data
+    # print(rv$parsedData)
     return(selected_text)
   })
   
@@ -184,6 +182,10 @@ server <- function(input, output, session) {
     updateTabsetPanel(session, "tabs", selected = "verification")
   })
   
+  observeEvent(input$goToGraphsTab, {
+    updateTabsetPanel(session, "tabs", selected = "graphs")
+  }) 
+  
   output$croppedImage = renderImage({
     croppedImg = image_crop(image, coords(), repage = FALSE)
     croppedImg = image_write(croppedImg, tempfile(fileext = 'jpg'), format = 'jpg') 
@@ -192,12 +194,12 @@ server <- function(input, output, session) {
   
   output$verificationTable <- renderRHandsontable({
     if (input$testType == "CBC (Complete Blood Count)") {
-      cbc = (rv$parsedData)[[1]][,2]
-      values = (rv$parsedData)[[1]][,3]
+      cbc = (rv$data)[[1]][,2]
+      values = (rv$data)[[1]][,3]
       clinDF = data.frame(CBC = cbc, Value = values)
     } else if (input$testType == "CMP (Complete Metabolic Panel)") {
-      cmp = (rv$parsedData)[[1]][,2]
-      values = (rv$parsedData)[[1]][,3]
+      cmp = (rv$data)[[1]][,2]
+      values = (rv$data)[[1]][,3]
       clinDF = data.frame(CMP = cmp, Value = values)
     }
     if(!is.null(clinDF))
