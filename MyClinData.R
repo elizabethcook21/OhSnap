@@ -101,13 +101,13 @@ ui <- fluidPage (
              ),  tabPanel(
                title = "Graphical Display"
              ),  tabPanel(
-               title = "Content"
+               title = "Contact"
              )
   )
 )
 
 server <- function(input, output, session) {
-  rv <- reactiveValues(data=NULL, rotate = NULL, rotatedImage = NULL)
+  rv <- reactiveValues(data=NULL, rotate = NULL, rotatedImage = NULL, parsedData = NULL)
   
   image <- image_read("DefaultImage.png")
   
@@ -168,9 +168,11 @@ server <- function(input, output, session) {
       data_selection_ocr()#image_ocr()
     imageData <<- text
     selected_text <- text
-    data <- str_match_all(selected_text, "([A-Za-z-]+)[ -]*([0-9.]+)[^\n]*\\[(.*)\\]")
+    # data <- str_match_all(selected_text, "([A-Za-z-]+)[\\s-]*([0-9.]+)[^\n]*\\[(.*)\\]")
+    data <- str_match_all(selected_text, "([A-Za-z-]+)[\\s-]*([0-9.]+)[^\n]*")
     print(selected_text)
-    print(data)
+    rv$parsedData = data
+    print(rv$parsedData)
     return(selected_text)
   })
   
@@ -190,15 +192,13 @@ server <- function(input, output, session) {
   
   output$verificationTable <- renderRHandsontable({
     if (input$testType == "CBC (Complete Blood Count)") {
-      cbc = c("WBC", "RBC", "HGB", "HCT", "MCV", "MCH", "MCHC", "PLT", "RDW-SD", "RDW-CV", "MPV", 
-              "NEUT", "NEUT-abs", "LYMPH", "LYMPH-abs", "MONO", "MONO-abs", "EO", "EO-abs", "BASO", "BASO-abs")
-      values = c()
-      clinDF = data.frame(CBC = cbc)
+      cbc = (rv$parsedData)[[1]][,2]
+      values = (rv$parsedData)[[1]][,3]
+      clinDF = data.frame(CBC = cbc, Value = values)
     } else if (input$testType == "CMP (Complete Metabolic Panel)") {
-      cmp = c("Na", "K", "Cl", "ECO2", "AGAP", "AHDL", "TBI", "TP", "GLOB", "ALPI", "TGL", 
-              "CHOL", "AST", "ALTI", "ALB", "A/G", "GLUC", "BUN", "CA", "CKE2", "BN/CR")
-      values = c()
-      clinDF = data.frame(CMP = cmp)
+      cmp = (rv$parsedData)[[1]][,2]
+      values = (rv$parsedData)[[1]][,3]
+      clinDF = data.frame(CMP = cmp, Value = values)
     }
     if(!is.null(clinDF))
       rhandsontable(clinDF, rowHeaders = NULL)
