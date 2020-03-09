@@ -7,6 +7,7 @@ library(shinycssloaders)
 library(shinythemes)
 library(rhandsontable)
 library(stringr)
+library(ggplot2)
 
 #as adapted from 'image_ocr' in package:magick
 data_selection_ocr <- function (image, whitelist = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.^%[]/-", HOCR = FALSE, ...) 
@@ -16,7 +17,7 @@ data_selection_ocr <- function (image, whitelist = "ABCDEFGHIJKLMNOPQRSTUVWXYZab
   ocr(image, engine = allowed_chars, HOCR = HOCR)
 }
 
-
+# ui ----------
 ui <- fluidPage (
   tags$head(
     tags$link(rel = "stylesheet", type = "text/css", href = "style.css"),
@@ -97,20 +98,34 @@ ui <- fluidPage (
                  mainPanel(rHandsontableOutput("verificationTable"))
                )
              ),  tabPanel(
-               title = "Graphical Display", value = "graphs"
+               title = "Graphical Display", value = "graphs",
+               sidebarLayout(
+                 sidebarPanel(
+                   tags$h2("View Your Data")
+                 ),
+                 mainPanel(
+                   plotOutput("testPlot", click = "testPlotSelection", height = "500px")
+                 )
+               )
              ),  tabPanel(
-               title = "Contact"
+               title = "Contact", value = "contact",
              )
   )
 )
 
+# server ----------
 server <- function(input, output, session) {
+  # global variables ----------
   rv <- reactiveValues(data=NULL, rotate = NULL, rotatedImage = NULL)
   
   image <- image_read("DefaultImage.png")
   
   imageData <- NULL
+
+  testData = data.frame(Date = c("8-14-2019", "9-23-2019", "10-25-2019", "11-22-2019", "12-19-2019", "01-31-2020", "02-14-2020", "02-21-2020"),
+                        WBC = c(6.26, 6.7, 7.05, 6.33, 5.58, 6.13, 6.18, 6.14))
     
+  # upload data tab ------------
   observeEvent(input$upload, {
     if (length(input$upload$datapath)) {
       image <<- image_read(input$upload$datapath)
@@ -182,17 +197,14 @@ server <- function(input, output, session) {
     updateTabsetPanel(session, "tabs", selected = "verification")
   })
   
-  observeEvent(input$goToGraphsTab, {
-    updateTabsetPanel(session, "tabs", selected = "graphs")
-  }) 
-  
+  # verification tab --------- 
   output$croppedImage = renderImage({
     croppedImg = image_crop(image, coords(), repage = FALSE)
     croppedImg = image_write(croppedImg, tempfile(fileext = 'jpg'), format = 'jpg') 
     list(src = croppedImg, width = "100%", height = "100%", contentType = "image/jpeg", alt = "This is the selected area of the original image")
   })
   
-  output$verificationTable <- renderRHandsontable({
+  output$verificationTable = renderRHandsontable({
     if (input$testType == "CBC (Complete Blood Count)") {
       cbc = (rv$data)[[1]][,2]
       values = (rv$data)[[1]][,3]
@@ -204,6 +216,27 @@ server <- function(input, output, session) {
     }
     if(!is.null(clinDF))
       rhandsontable(clinDF, rowHeaders = NULL)
+  })
+  
+  observeEvent(input$goToGraphsTab, {
+    updateTabsetPanel(session, "tabs", selected = "graphs")
+  }) 
+  
+  # graphical display tab ----------
+  output$testPlot = renderPlot({
+    ggplot(testData, aes(x = Date, y = WBC, group = 1)) +
+      geom_point() +
+      geom_line() + 
+      scale_y_discrete(limits = seq(from = floor(min(testData$WBC)), to = ceiling(max(testData$WBC)), by = 0.5)) +
+      labs(title = "CMP - White Blood Cell (WBC)",
+           x = "Date (dd-mm-yyyy)",
+           y = "WBC (10^3/uL)") +
+      theme_bw() +
+      theme(text = element_text(size=22),
+            plot.title = element_text(hjust = 0.5),
+            axis.text.x = element_text(angle = 45, hjust = 1, margin = margin(b = 15)),
+            axis.text.y = element_text(margin = margin(l = 15)),
+            axis.ticks.length = unit(.25, "cm"))
   })
 }
 
