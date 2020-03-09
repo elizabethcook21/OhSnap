@@ -16,6 +16,7 @@ data_selection_ocr <- function (image, whitelist = "ABCDEFGHIJKLMNOPQRSTUVWXYZab
   allowed_chars = tesseract(options = list(tessedit_char_whitelist = whitelist))
   ocr(image, engine = allowed_chars, HOCR = HOCR)
 }
+dataTypes = list(CMP = c("WBC", "RBC", "HGB", "HCT", "MCV", "MCH", "MCHC", "PLT", "RDW-SD", "RDW-CV", "MPV", "NEUT", "LYMPH", "MONO", "EO", "BASO"), CBC = c("Na", "K","Cl", "ECO2", "AGAP", "AHOL", "TBI", "TP", "GLOB", "ALPI","TGL", "CHOL", "AST", "ALTI", "ALB", "A/G", "GLUC", "BUN", "CA", "CRE2", "BN/CR"))
 
 # ui ----------
 ui <- fluidPage (
@@ -101,7 +102,8 @@ ui <- fluidPage (
                title = "Graphical Display", value = "graphs",
                sidebarLayout(
                  sidebarPanel(
-                   tags$h2("View Your Data")
+                   tags$h2("View Your Data"),
+                   uiOutput("plotDataType")
                  ),
                  mainPanel(
                    plotOutput("testPlot", click = "testPlotSelection", height = "500px")
@@ -116,7 +118,7 @@ ui <- fluidPage (
 # server ----------
 server <- function(input, output, session) {
   # global variables ----------
-  rv <- reactiveValues(data=NULL, rotate = NULL, rotatedImage = NULL)
+  rv <- reactiveValues(data=NULL, rotate = NULL, rotatedImage = NULL, selectedTestType = "CMP")
   
   image <- image_read("DefaultImage.png")
   
@@ -132,6 +134,10 @@ server <- function(input, output, session) {
       info   <- image_info(image)
       updateTextInput(session, "size", value = paste(info$width, info$height, sep = "x"))
     }
+  })
+  
+  observeEvent(input$testType, {
+    rv$selectedTestType = str_split(input$testType, pattern = " ")[[1]][1]
   })
   
   output$image_brushinfo <- renderPrint({
@@ -237,6 +243,10 @@ server <- function(input, output, session) {
             axis.text.x = element_text(angle = 45, hjust = 1, margin = margin(b = 15)),
             axis.text.y = element_text(margin = margin(l = 15)),
             axis.ticks.length = unit(.25, "cm"))
+  })
+  
+  output$plotDataType = renderUI({
+    selectInput(inputId = "dataType", label = "Data Type:", choices = dataTypes[[rv$selectedTestType]])
   })
 }
 
