@@ -9,6 +9,14 @@ library(rhandsontable)
 library(stringr)
 library(ggplot2)
 library(plotly)
+library(googleAuthR)
+library(googlesheets4)
+
+# Global variables and functions ----------------
+options(googleAuthR.scopes.selected = c("https://www.googleapis.com/auth/userinfo.email",
+                                        "https://www.googleapis.com/auth/userinfo.profile"))
+options("googleAuthR.webapp.client_id" = "543814214955-9u26dmgeaoo8p03fna1gc11ond5md1ta.apps.googleusercontent.com")
+options("googleAuthR.webapp.client_secret" = "4mbPAzE7UFZjTFYGcjPS1MYS")
 
 #as adapted from 'image_ocr' in package:magick
 data_selection_ocr <- function (image, whitelist = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.^%[]/-", HOCR = FALSE, ...) 
@@ -31,6 +39,13 @@ ui <- fluidPage (
   useShinyjs(),
   #shinythemes::themeSelector(),
   navbarPage(theme = shinytheme("flatly"), title = "MyClinData", id = 'tabs',
+             # * login tab ----------
+             tabPanel(
+               title = "Login",  value = "login",
+               fluidRow(
+                 googleAuthUI("gauth_login"),
+                 actionButton("Continue with Local Data", label = "Local Data"))   
+             ),
             # * upload data tab ----------
              tabPanel('Upload Data', value = 'uploadData',
                       sidebarLayout(
@@ -130,7 +145,7 @@ ui <- fluidPage (
 # server ----------
 server <- function(input, output, session) {
   # global variables ----------
-  rv <- reactiveValues(data=NULL, rotate = NULL, rotatedImage = NULL, selectedTestType = NULL)
+  rv <- reactiveValues(data=NULL, rotate = NULL, rotatedImage = NULL, selectedTestType = NULL, login = FALSE)
   
   image <- image_read("DefaultImage.png")
   
@@ -138,7 +153,35 @@ server <- function(input, output, session) {
 
   testData = data.frame(Date = c("2019-8-14", "2019-9-23", "2019-10-25", "2019-11-22", "2019-12-19", "2020-1-31", "2020-2-14", "2020-2-21"),
                         WBC = c(6.26, 6.7, 7.05, 6.33, 5.58, 6.13, 6.18, 6.14))
-    
+  
+  # Google Login Code -------------------------------------------------
+  accessToken <- callModule(googleAuth, "gauth_login",
+                            login_class = "btn btn-primary",
+                            logout_class = "btn btn-primary")
+  userDetails <- reactive({
+    validate(
+      need(accessToken(), "not logged in")
+    )
+    rv$login <- TRUE
+    with_shiny(get_user_info, shiny_access_token = accessToken())
+  })
+  
+  userDetails <- reactive({
+    validate(
+      need(accessToken(), "not logged in")
+    )
+    rv$login <- TRUE
+    with_shiny(get_user_info, shiny_access_token = accessToken())
+  })
+  
+  observe({
+    if (rv$login) {
+      shinyjs::onclick("gauth_login-googleAuthUi",
+                       shinyjs::runjs("window.location.href = 'https://yourdomain.shinyapps.io/appName';"))
+      print(googledrive::drive_find(""))
+    }
+  })
+  
   # upload data tab ------------
   observeEvent(input$upload, {
     if (length(input$upload$datapath)) {
