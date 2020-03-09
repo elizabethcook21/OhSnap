@@ -311,5 +311,6 @@ server <- function(input, output, session) {
   output$plotDataType = renderUI({
     selectInput(inputId = "dataType", label = "Data Type:", choices = dataTypes[[rv$selectedTestType]])
   })
-  
 }
+
+shinyApp(ui, server)
