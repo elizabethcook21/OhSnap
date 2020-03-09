@@ -18,6 +18,9 @@ data_selection_ocr <- function (image, whitelist = "ABCDEFGHIJKLMNOPQRSTUVWXYZab
   ocr(image, engine = allowed_chars, HOCR = HOCR)
 }
 
+dataTypes = list(CMP = c("WBC", "RBC", "HGB", "HCT", "MCV", "MCH", "MCHC", "PLT", "RDW-SD", "RDW-CV", "MPV", "NEUT", "LYMPH", "MONO", "EO", "BASO"), CBC = c("Na", "K","Cl", "ECO2", "AGAP", "AHOL", "TBI", "TP", "GLOB", "ALPI","TGL", "CHOL", "AST", "ALTI", "ALB", "A/G", "GLUC", "BUN", "CA", "CRE2", "BN/CR"))
+
+
 # ui ----------
 ui <- fluidPage (
   tags$head(
@@ -110,6 +113,7 @@ ui <- fluidPage (
                  ),
                  mainPanel(
                    plotlyOutput("plotly"),
+                   uiOutput("plotDataType")
                    # plotOutput("ggplot", height = "500px",
                    #            click = "test_click"),
                    # verbatimTextOutput("click_info"),
@@ -126,7 +130,7 @@ ui <- fluidPage (
 # server ----------
 server <- function(input, output, session) {
   # global variables ----------
-  rv <- reactiveValues(data=NULL, rotate = NULL, rotatedImage = NULL)
+  rv <- reactiveValues(data=NULL, rotate = NULL, rotatedImage = NULL, selectedTestType = "CMP")
   
   image <- image_read("DefaultImage.png")
   
@@ -142,6 +146,10 @@ server <- function(input, output, session) {
       info   <- image_info(image)
       updateTextInput(session, "size", value = paste(info$width, info$height, sep = "x"))
     }
+  })
+  
+  observeEvent(input$testType, {
+    rv$selectedTestType = str_split(input$testType, pattern = " ")[[1]][1]
   })
   
   output$image_brushinfo <- renderPrint({
@@ -260,10 +268,14 @@ server <- function(input, output, session) {
              font = list(size = 16))
   )
   
+
+  output$plotDataType = renderUI({
+    selectInput(inputId = "dataType", label = "Data Type:", choices = dataTypes[[rv$selectedTestType]])
+  })
+  
   # output$click_info <- renderPrint({
   #   cat("input$test_click:\n")
   #   str(input$test_click)
   # })
 }
-
 shinyApp(ui, server)
