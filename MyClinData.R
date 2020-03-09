@@ -18,7 +18,8 @@ data_selection_ocr <- function (image, whitelist = "ABCDEFGHIJKLMNOPQRSTUVWXYZab
   ocr(image, engine = allowed_chars, HOCR = HOCR)
 }
 
-dataTypes = list(CMP = c("WBC", "RBC", "HGB", "HCT", "MCV", "MCH", "MCHC", "PLT", "RDW-SD", "RDW-CV", "MPV", "NEUT", "LYMPH", "MONO", "EO", "BASO"), CBC = c("Na", "K","Cl", "ECO2", "AGAP", "AHOL", "TBI", "TP", "GLOB", "ALPI","TGL", "CHOL", "AST", "ALTI", "ALB", "A/G", "GLUC", "BUN", "CA", "CRE2", "BN/CR"))
+dataTypes = list(CMP = c("WBC", "RBC", "HGB", "HCT", "MCV", "MCH", "MCHC", "PLT", "RDW-SD", "RDW-CV", "MPV", "NEUT", "LYMPH", "MONO", "EO", "BASO"), 
+                 CBC = c("Na", "K","Cl", "ECO2", "AGAP", "AHOL", "TBI", "TP", "GLOB", "ALPI","TGL", "CHOL", "AST", "ALTI", "ALB", "A/G", "GLUC", "BUN", "CA", "CRE2", "BN/CR"))
 
 
 # ui ----------
@@ -109,14 +110,13 @@ ui <- fluidPage (
                title = "Graphical Display", value = "graphs",
                sidebarLayout(
                  sidebarPanel(
-                   tags$h2("View Your Data")
+                   tags$h2("View Your Data"),
+                   uiOutput("plotDataType")
                  ),
                  mainPanel(
-                   plotlyOutput("plotly"),
-                   uiOutput("plotDataType")
-                   # plotOutput("ggplot", height = "500px",
-                   #            click = "test_click"),
-                   # verbatimTextOutput("click_info"),
+                   tags$div(class = "plot",
+                    plotlyOutput("plot")
+                   ),
                  )
                )
              ),  
@@ -130,7 +130,7 @@ ui <- fluidPage (
 # server ----------
 server <- function(input, output, session) {
   # global variables ----------
-  rv <- reactiveValues(data=NULL, rotate = NULL, rotatedImage = NULL, selectedTestType = "CMP")
+  rv <- reactiveValues(data=NULL, rotate = NULL, rotatedImage = NULL, selectedTestType = NULL)
   
   image <- image_read("DefaultImage.png")
   
@@ -150,6 +150,7 @@ server <- function(input, output, session) {
   
   observeEvent(input$testType, {
     rv$selectedTestType = str_split(input$testType, pattern = " ")[[1]][1]
+    print(rv$selectedTestType)
   })
   
   output$image_brushinfo <- renderPrint({
@@ -199,11 +200,8 @@ server <- function(input, output, session) {
       data_selection_ocr()#image_ocr()
     imageData <<- text
     selected_text <- text
-    # data <- str_match_all(selected_text, "([A-Za-z-]+)[\\s-]*([0-9.]+)[^\n]*\\[(.*)\\]")
     rv$data <- str_match_all(selected_text, "([A-Za-z-]+)[\\s-]*([0-9.]+)[^\n]*")
     print(selected_text)
-    # rv$parsedData = data
-    # print(rv$parsedData)
     return(selected_text)
   })
   
@@ -241,41 +239,35 @@ server <- function(input, output, session) {
   }) 
   
   # graphical display tab ----------
-  # output$ggplot = renderPlot({
-  #   ggplot(testData, aes(x = Date, y = WBC, group = 1)) +
-  #     geom_point() +
-  #     geom_line() +
-  #     scale_y_discrete(limits = seq(from = floor(min(testData$WBC)), to = ceiling(max(testData$WBC)), by = 0.5)) +
-  #     labs(title = "CMP - White Blood Cell (WBC)",
-  #          x = "Date (dd-mm-yyyy)",
-  #          y = "WBC (10^3/uL)") +
-  #     theme_bw() +
-  #     theme(text = element_text(size=22),
-  #           plot.title = element_text(hjust = 0.5),
-  #           axis.text.x = element_text(angle = 45, hjust = 1, margin = margin(b = 15)),
-  #           axis.text.y = element_text(margin = margin(l = 15)),
-  #           axis.ticks.length = unit(.25, "cm"))
-  # })
+  makePlot = function() {
+    testData$Date = as.Date(testData$Date)
+    fig = ggplot(testData, aes(x = Date, y = WBC, group = 1)) +
+      geom_point() +
+      geom_line() +
+      scale_x_date(date_labels = "%b %Y", date_breaks = "1 month") +
+      scale_y_discrete(limits = seq(from = floor(min(testData$WBC)), to = ceiling(max(testData$WBC)), by = 0.5)) +
+      labs(title = "CMP - White Blood Cell (WBC)",
+           x = "Date",
+           y = "WBC (10^3/uL)") +
+      theme_bw() +
+      theme(plot.title = element_text(hjust = 0.5, size = 18),
+            axis.title.x = element_text(size = 16),
+            axis.text.x = element_text(angle = 45, hjust = 1, size = 12, margin = margin(b = 20)),
+            axis.title.y = element_text(size = 16),
+            axis.text.y = element_text(size = 12, margin = margin(l = 15)),
+            axis.ticks.length = unit(.25, "cm"))
+    fig = ggplotly(fig) %>% layout(height = 600)
+    return(fig)
+  }
   
-  testData$Date = as.Date(testData$Date)
-  output$plotly = renderPlotly(
-    plot_ly(data = testData, x = ~Date, y = ~WBC, 
-            type = "scatter", mode = "lines+markers", 
-            line = list(width = 3)) %>%
-      layout(title = "CMP - White Blood Cell (WBC)",
-             xaxis = list(title = "Date"),
-             yaxis = list(title = "WBC (10^3/uL)"),
-             font = list(size = 16))
+  
+  output$plot = renderPlotly(
+    makePlot()
   )
-  
 
   output$plotDataType = renderUI({
     selectInput(inputId = "dataType", label = "Data Type:", choices = dataTypes[[rv$selectedTestType]])
   })
   
-  # output$click_info <- renderPrint({
-  #   cat("input$test_click:\n")
-  #   str(input$test_click)
-  # })
 }
 shinyApp(ui, server)
