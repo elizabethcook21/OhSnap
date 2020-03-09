@@ -8,6 +8,7 @@ library(shinythemes)
 library(rhandsontable)
 library(stringr)
 library(ggplot2)
+library(plotly)
 
 #as adapted from 'image_ocr' in package:magick
 data_selection_ocr <- function (image, whitelist = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.^%[]/-", HOCR = FALSE, ...) 
@@ -26,6 +27,7 @@ ui <- fluidPage (
   useShinyjs(),
   #shinythemes::themeSelector(),
   navbarPage(theme = shinytheme("flatly"), title = "MyClinData", id = 'tabs',
+            # * upload data tab ----------
              tabPanel('Upload Data', value = 'uploadData',
                       sidebarLayout(
                         sidebarPanel(
@@ -90,6 +92,7 @@ ui <- fluidPage (
                           )
                       )
              ),
+            # * verifiction tab ----------
              tabPanel(
                title = "Verification", value = "verification",
                sidebarLayout(
@@ -97,17 +100,24 @@ ui <- fluidPage (
                               actionButton("goToGraphsTab", "Next")),
                  mainPanel(rHandsontableOutput("verificationTable"))
                )
-             ),  tabPanel(
+             ),  
+            # * graphical display tab ----------
+            tabPanel(
                title = "Graphical Display", value = "graphs",
                sidebarLayout(
                  sidebarPanel(
                    tags$h2("View Your Data")
                  ),
                  mainPanel(
-                   plotOutput("testPlot", click = "testPlotSelection", height = "500px")
+                   plotlyOutput("plotly"),
+                   # plotOutput("ggplot", height = "500px",
+                   #            click = "test_click"),
+                   # verbatimTextOutput("click_info"),
                  )
                )
-             ),  tabPanel(
+             ),  
+            # * contact tab ----------
+            tabPanel(
                title = "Contact", value = "contact",
              )
   )
@@ -122,7 +132,7 @@ server <- function(input, output, session) {
   
   imageData <- NULL
 
-  testData = data.frame(Date = c("8-14-2019", "9-23-2019", "10-25-2019", "11-22-2019", "12-19-2019", "01-31-2020", "02-14-2020", "02-21-2020"),
+  testData = data.frame(Date = c("2019-8-14", "2019-9-23", "2019-10-25", "2019-11-22", "2019-12-19", "2020-1-31", "2020-2-14", "2020-2-21"),
                         WBC = c(6.26, 6.7, 7.05, 6.33, 5.58, 6.13, 6.18, 6.14))
     
   # upload data tab ------------
@@ -223,21 +233,37 @@ server <- function(input, output, session) {
   }) 
   
   # graphical display tab ----------
-  output$testPlot = renderPlot({
-    ggplot(testData, aes(x = Date, y = WBC, group = 1)) +
-      geom_point() +
-      geom_line() + 
-      scale_y_discrete(limits = seq(from = floor(min(testData$WBC)), to = ceiling(max(testData$WBC)), by = 0.5)) +
-      labs(title = "CMP - White Blood Cell (WBC)",
-           x = "Date (dd-mm-yyyy)",
-           y = "WBC (10^3/uL)") +
-      theme_bw() +
-      theme(text = element_text(size=22),
-            plot.title = element_text(hjust = 0.5),
-            axis.text.x = element_text(angle = 45, hjust = 1, margin = margin(b = 15)),
-            axis.text.y = element_text(margin = margin(l = 15)),
-            axis.ticks.length = unit(.25, "cm"))
-  })
+  # output$ggplot = renderPlot({
+  #   ggplot(testData, aes(x = Date, y = WBC, group = 1)) +
+  #     geom_point() +
+  #     geom_line() +
+  #     scale_y_discrete(limits = seq(from = floor(min(testData$WBC)), to = ceiling(max(testData$WBC)), by = 0.5)) +
+  #     labs(title = "CMP - White Blood Cell (WBC)",
+  #          x = "Date (dd-mm-yyyy)",
+  #          y = "WBC (10^3/uL)") +
+  #     theme_bw() +
+  #     theme(text = element_text(size=22),
+  #           plot.title = element_text(hjust = 0.5),
+  #           axis.text.x = element_text(angle = 45, hjust = 1, margin = margin(b = 15)),
+  #           axis.text.y = element_text(margin = margin(l = 15)),
+  #           axis.ticks.length = unit(.25, "cm"))
+  # })
+  
+  testData$Date = as.Date(testData$Date)
+  output$plotly = renderPlotly(
+    plot_ly(data = testData, x = ~Date, y = ~WBC, 
+            type = "scatter", mode = "lines+markers", 
+            line = list(width = 3)) %>%
+      layout(title = "CMP - White Blood Cell (WBC)",
+             xaxis = list(title = "Date"),
+             yaxis = list(title = "WBC (10^3/uL)"),
+             font = list(size = 16))
+  )
+  
+  # output$click_info <- renderPrint({
+  #   cat("input$test_click:\n")
+  #   str(input$test_click)
+  # })
 }
 
 shinyApp(ui, server)
