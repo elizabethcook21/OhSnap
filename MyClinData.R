@@ -11,7 +11,6 @@ library(ggplot2)
 library(plotly)
 library(googleAuthR)
 library(googlesheets4)
-# library(xlsx)
 library(zip)
 library(readxl)
 library(writexl)
@@ -218,16 +217,12 @@ server <- function(input, output, session) {
                           p("Please select which type of test you are planning on uploading:"),
                           selectInput(inputId = "testType", label = "Tests:", choices = c("CBC (Complete Blood Count)", "CMP (Complete Metabolic Panel)")),
                           p("Now, please navigate to the file you wish to have your data added to and put the path in the following text box:"),
-                          textInput("currFile", "File to append to:"),
+                          fileInput("infile", "Pleaseupload corresponding file", placeholder = "Browse for file"),
                           size = "m", easyClose = FALSE))
   })
   
-  observeEvent(input$currFile, {
-    if(input$currFile != ""){
-      print(input$currFile)
-      rv$currDF <- readxl_example(input$currFile)
-    }
-   
+  observeEvent(input$infile, {
+    rv$currDF <- read_excel(input$infile)
   })
   
 
