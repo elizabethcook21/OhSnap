@@ -218,11 +218,19 @@ server <- function(input, output, session) {
                           selectInput(inputId = "testType", label = "Tests:", choices = c("CBC (Complete Blood Count)", "CMP (Complete Metabolic Panel)")),
                           p("Now, please navigate to the file you wish to have your data added to and put the path in the following text box:"),
                           fileInput("infile", "Pleaseupload corresponding file", placeholder = "Browse for file"),
+                          footer = tagList(
+                            actionButton("continueToUpload", "Continue")
+                          ),
                           size = "m", easyClose = FALSE))
   })
   
   observeEvent(input$infile, {
-    rv$currDF <- read_excel(input$infile)
+    rv$currDF <- read_excel(input$infile$datapath)
+  })
+  
+  observeEvent(input$continueToUpload, {
+    removeModal()
+    updateTabsetPanel(session, "tabs", selected = "uploadData")
   })
   
 
