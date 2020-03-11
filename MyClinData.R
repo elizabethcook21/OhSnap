@@ -76,7 +76,7 @@ ui <- fluidPage (
                           ),
                           tags$h4("Selected Area"),
                           verbatimTextOutput("coordstext"),
-                          tags$h4("Select Test"),
+                          dateInput(inputId = "testDate", label = "Input the Date of the Test", format = "yyyy-mm-dd"),
                           actionButton("goToVerificationTab", "Next")
                         ), 
                         mainPanel(      
