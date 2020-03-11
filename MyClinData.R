@@ -11,6 +11,8 @@ library(ggplot2)
 library(plotly)
 library(googleAuthR)
 library(googlesheets4)
+library(xlsx)
+library(zip)
 
 # Global variables and functions ----------------
 options(googleAuthR.scopes.selected = c("https://www.googleapis.com/auth/userinfo.email",
@@ -43,10 +45,15 @@ ui <- fluidPage (
              tabPanel(
                title = "Login",  value = "login",
                fluidRow(
-                 googleAuthUI("gauth_login"),
-                 actionButton("Continue with Local Data", label = "Local Data"))   
+                 align = "center",
+                 br(), br(),
+                 tags$img(src = 'TempLogo.jpg', align = "center", height = "300px"),
+                 br(),
+                 actionButton("personal", label = "Store on Personal Computer"),
+                 br(), br(),
+                 googleAuthUI("gauth_login"))   
              ),
-            # * upload data tab ----------
+             # * upload data tab ----------
              tabPanel('Upload Data', value = 'uploadData',
                       sidebarLayout(
                         sidebarPanel(
@@ -70,7 +77,6 @@ ui <- fluidPage (
                           tags$h4("Selected Area"),
                           verbatimTextOutput("coordstext"),
                           tags$h4("Select Test"),
-                          selectInput(inputId = "testType", label = "Tests:", choices = c("CBC (Complete Blood Count)", "CMP (Complete Metabolic Panel)")),
                           actionButton("goToVerificationTab", "Next")
                         ), 
                         mainPanel(      
@@ -98,20 +104,20 @@ ui <- fluidPage (
                                                   stroke    = "#F5A623",
                                                   clip      = FALSE),
                                                 height = "auto"
-                                                ),
+                                              ),
                                               title = "Click & Drag Over Image")
-                                        )),
+                          )),
                           fluidRow(column(width = 12,
                                           box(width = 12,
                                               textOutput("ocr_text"),
                                               verbatimTextOutput("text_extract"),
                                               title = "Text Output"
                                           )
-                                        ))
-                          )
+                          ))
+                        )
                       )
              ),
-            # * verifiction tab ----------
+             # * verifiction tab ----------
              tabPanel(
                title = "Verification", value = "verification",
                sidebarLayout(
@@ -120,8 +126,8 @@ ui <- fluidPage (
                  mainPanel(rHandsontableOutput("verificationTable"))
                )
              ),  
-            # * graphical display tab ----------
-            tabPanel(
+             # * graphical display tab ----------
+             tabPanel(
                title = "Graphical Display", value = "graphs",
                sidebarLayout(
                  sidebarPanel(
@@ -129,15 +135,28 @@ ui <- fluidPage (
                    uiOutput("plotDataType")
                  ),
                  mainPanel(
-                   tags$div(class = "plot",
-                    plotlyOutput("plot")
-                   ),
+                   #tags$div(class = "plot",
+                  #          plotlyOutput("plot")
+                  # )
                  )
                )
              ),  
-            # * contact tab ----------
-            tabPanel(
-               title = "Contact", value = "contact",
+             # * contact tab ----------
+             tabPanel("Contact", value = "contact",
+                      sidebarLayout(
+                        sidebarPanel(HTML('<center><img src="BYULogo.png" width="170"></center>')
+                        ),
+                        mainPanel(
+                          h4("Contact"),
+                          HTML(paste('<div>This app was developed by Erica Suh, Ed Ringger, Tyler Heaton, and Elizabeth Anderson
+                                      under the direction of Dr. Samuel Payne for the 2020 Winter BYU Capstone class.
+                                     For questions and comments, please visit', 
+                                     '<a target="_blank", href="https://biology.byu.edu/sam-payne-lab">https://biology.byu.edu/sam-payne-lab</a>.',
+                                     '<p>The source code for MyClinData can be found at', 
+                                     '<a target="_blank", href="https://github.com/elizabethcook21/MyClinData">https://github.com/elizabethcook21/MyClinData</a>.</p></div>'))
+                        )
+                        
+                      )
              )
   )
 )
@@ -145,12 +164,12 @@ ui <- fluidPage (
 # server ----------
 server <- function(input, output, session) {
   # global variables ----------
-  rv <- reactiveValues(data=NULL, rotate = NULL, rotatedImage = NULL, selectedTestType = NULL, login = FALSE)
+  rv <- reactiveValues(data=NULL, rotate = NULL, rotatedImage = NULL, selectedTestType = NULL, login = FALSE, currDF = NULL)
   
   image <- image_read("DefaultImage.png")
   
   imageData <- NULL
-
+  
   testData = data.frame(Date = c("2019-8-14", "2019-9-23", "2019-10-25", "2019-11-22", "2019-12-19", "2020-1-31", "2020-2-14", "2020-2-21"),
                         WBC = c(6.26, 6.7, 7.05, 6.33, 5.58, 6.13, 6.18, 6.14))
   
@@ -182,6 +201,53 @@ server <- function(input, output, session) {
     }
   })
   
+  # Personal Data Login Code
+  observeEvent(input$personal, {
+    showModal(modalDialog(title = tags$b("Store Data on your Personal Computer"),
+                          h4("First Time User:"),
+                          p("If this is your first time using the app, please navigate to a location on your
+                          computer that you wish to store your test results and make a folder called \"MyClinData\"."),
+                          p("Once you're done, please click the following button and navigate to the folder you just made. 
+                          Clicking the button will generate excel sheets that will be host the data you upload in this app."),
+                          downloadButton("makeFiles", "Make Excel Files"),
+                          p("Now that you've downloaded the zip fle, please extract it somewhere on your computer that you can remember, then continue
+                            following the instructions for the continuing user below."),
+                          h4("Continuing User:"),
+                          p("Please select which type of test you are planning on uploading:"),
+                          selectInput(inputId = "testType", label = "Tests:", choices = c("CBC (Complete Blood Count)", "CMP (Complete Metabolic Panel)")),
+                          p("Now, please navigate to the file you wish to have your data added to and put the path in the following text box:"),
+                          textInput("currFile", "File to append to:"),
+                          size = "m", easyClose = FALSE))
+  })
+  
+  observeEvent(input$currFile, {
+    if(input$currFile != ""){
+      print(input$currFile)
+      rv$currDF <- read.xlsx2(input$currFile, 1)
+    }
+   
+  })
+  
+
+  # Make Zipped fie
+  output$makeFiles <- downloadHandler(
+    filename = "MyClinData.zip",
+    content = function(file) {
+      files <- NULL
+      for (i in 1:length(dataTypes)){
+        fileName <- paste(names(dataTypes[i]),".xlsx",sep = "")
+        data <- c("Date", dataTypes[[i]])
+        data <- rbind(data)
+        write.xlsx2(data, paste0(fileName), fileName, col.names = FALSE, row.names = FALSE, append = FALSE)
+        files <- c(fileName, files)
+      }
+      zip::zipr(file, files)
+      if(file.exists(paste0(file, ".zip"))) {
+        file.rename(paste0(file, ".zip"), file)
+      }
+    }
+  )
+  
   # upload data tab ------------
   observeEvent(input$upload, {
     if (length(input$upload$datapath)) {
@@ -193,7 +259,6 @@ server <- function(input, output, session) {
   
   observeEvent(input$testType, {
     rv$selectedTestType = str_split(input$testType, pattern = " ")[[1]][1]
-    print(rv$selectedTestType)
   })
   
   output$image_brushinfo <- renderPrint({
@@ -307,7 +372,7 @@ server <- function(input, output, session) {
   output$plot = renderPlotly(
     makePlot()
   )
-
+  
   output$plotDataType = renderUI({
     selectInput(inputId = "dataType", label = "Data Type:", choices = dataTypes[[rv$selectedTestType]])
   })
