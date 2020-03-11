@@ -223,8 +223,8 @@ server <- function(input, output, session) {
   
   observeEvent(input$infile, {
     #if(input$in != ""){
-      print(input$currFile)
-      rv$currDF <- read.xlsx2(input$inFile$datapath, 1)
+      print(input$infile)
+      rv$currDF <- read.xlsx2(input$infile$datapath, 1)
     #}
    
   })
