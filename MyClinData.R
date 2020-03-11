@@ -216,15 +216,16 @@ server <- function(input, output, session) {
                           p("Please select which type of test you are planning on uploading:"),
                           selectInput(inputId = "testType", label = "Tests:", choices = c("CBC (Complete Blood Count)", "CMP (Complete Metabolic Panel)")),
                           p("Now, please navigate to the file you wish to have your data added to and put the path in the following text box:"),
-                          textInput("currFile", "File to append to:"),
+                          fileInput("infile", "Test File:",
+                                    placeholder= "Find Your File"),
                           size = "m", easyClose = FALSE))
   })
   
-  observeEvent(input$currFile, {
-    if(input$currFile != ""){
+  observeEvent(input$infile, {
+    #if(input$in != ""){
       print(input$currFile)
-      rv$currDF <- read.xlsx2(input$currFile, 1)
-    }
+      rv$currDF <- read.xlsx2(input$inFile$datapath, 1)
+    #}
    
   })
   
