@@ -11,8 +11,10 @@ library(ggplot2)
 library(plotly)
 library(googleAuthR)
 library(googlesheets4)
-library(xlsx)
+# library(xlsx)
 library(zip)
+library(readxl)
+library(writexl)
 
 # Global variables and functions ----------------
 options(googleAuthR.scopes.selected = c("https://www.googleapis.com/auth/userinfo.email",
@@ -223,7 +225,7 @@ server <- function(input, output, session) {
   observeEvent(input$currFile, {
     if(input$currFile != ""){
       print(input$currFile)
-      rv$currDF <- read.xlsx2(input$currFile, 1)
+      rv$currDF <- readxl_example(input$currFile)
     }
    
   })
@@ -238,7 +240,7 @@ server <- function(input, output, session) {
         fileName <- paste(names(dataTypes[i]),".xlsx",sep = "")
         data <- c("Date", dataTypes[[i]])
         data <- rbind(data)
-        write.xlsx2(data, paste0(fileName), fileName, col.names = FALSE, row.names = FALSE, append = FALSE)
+        write_xlsx(as.data.frame(data), paste0(fileName), col_names = FALSE, format_headers = FALSE)
         files <- c(fileName, files)
       }
       zip::zipr(file, files)
