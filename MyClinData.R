@@ -77,7 +77,7 @@ ui <- fluidPage (
                           ),
                           tags$h4("Selected Area"),
                           verbatimTextOutput("coordstext"),
-                          tags$h4("Select Test"),
+                          dateInput(inputId = "testDate", label = "Input the date of the test", format = "yyyy-mm-dd"),
                           actionButton("goToVerificationTab", "Next")
                         ), 
                         mainPanel(      
@@ -165,7 +165,7 @@ ui <- fluidPage (
 # server ----------
 server <- function(input, output, session) {
   # global variables ----------
-  rv <- reactiveValues(data=NULL, rotate = NULL, rotatedImage = NULL, selectedTestType = NULL, login = FALSE, currDF = NULL)
+  rv <- reactiveValues(data=NULL, rotate = NULL, rotatedImage = NULL, selectedTestType = NULL, login = FALSE, currDF = NULL, testDate = NULL)
   
   image <- image_read("DefaultImage.png")
   
@@ -260,6 +260,10 @@ server <- function(input, output, session) {
       info   <- image_info(image)
       updateTextInput(session, "size", value = paste(info$width, info$height, sep = "x"))
     }
+  })
+  
+  observeEvent(input$testDate,{
+    rv$testDate = input$testDate
   })
   
   observeEvent(input$testType, {
