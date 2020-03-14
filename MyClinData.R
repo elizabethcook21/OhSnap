@@ -14,6 +14,7 @@ library(googlesheets4)
 library(zip)
 library(readxl)
 library(writexl)
+library(tidyverse)
 
 # Global variables and functions ----------------
 options(googleAuthR.scopes.selected = c("https://www.googleapis.com/auth/userinfo.email",
@@ -133,12 +134,12 @@ ui <- fluidPage (
                sidebarLayout(
                  sidebarPanel(
                    tags$h2("View Your Data"),
-                   uiOutput("plotDataType")
+                   uiOutput("selectedDataType")
                  ),
                  mainPanel(
-                   #tags$div(class = "plot",
-                  #          plotlyOutput("plot")
-                  # )
+                  tags$div(class = "plot",
+                           plotlyOutput("plot")
+                  )
                  )
                )
              ),  
@@ -165,7 +166,7 @@ ui <- fluidPage (
 # server ----------
 server <- function(input, output, session) {
   # global variables ----------
-  rv <- reactiveValues(data=NULL, rotate = NULL, rotatedImage = NULL, selectedTestType = NULL, login = FALSE, currDF = NULL, testDate = NULL)
+  rv <- reactiveValues(data=NULL, rotate = NULL, rotatedImage = NULL, selectedTest = NULL, selectedDataType = NULL, login = FALSE, currDF = NULL, testDate = NULL)
   
   image <- image_read("DefaultImage.png")
   
@@ -267,7 +268,7 @@ server <- function(input, output, session) {
   })
   
   observeEvent(input$testType, {
-    rv$selectedTestType = str_split(input$testType, pattern = " ")[[1]][1]
+    rv$selectedTest = str_split(input$testType, pattern = " ")[[1]][1]
   })
   
   output$image_brushinfo <- renderPrint({
@@ -356,16 +357,30 @@ server <- function(input, output, session) {
   }) 
   
   # graphical display tab ----------
+  output$selectedDataType = renderUI({
+    selectInput(inputId = "dataType", label = "Data Type:", choices = dataTypes[[rv$selectedTest]], selected = dataTypes[[rv$selectedTest]][1])
+  })
+  
+  observeEvent(input$dataType, {
+    rv$selectedDataType = input$dataType
+    print(rv$selectedDataType)
+  })
+  
   makePlot = function() {
-    testData$Date = as.Date(testData$Date)
-    fig = ggplot(testData, aes(x = Date, y = WBC, group = 1)) +
+    df = select(rv$currDF, Date, UQ(as.name(rv$selectedDataType)))
+    df$Date = as.Date(df$Date)
+    print(df)
+    min = floor(min(df[rv$selectedDataType]))
+    max = ceiling(max(df[rv$selectedDataType]))
+    
+    fig = ggplot(df, aes(x = Date, y = UQ(as.name(rv$selectedDataType)))) +
       geom_point() +
       geom_line() +
       scale_x_date(date_labels = "%b %Y", date_breaks = "1 month") +
-      scale_y_discrete(limits = seq(from = floor(min(testData$WBC)), to = ceiling(max(testData$WBC)), by = 0.5)) +
-      labs(title = "CMP - White Blood Cell (WBC)",
+      scale_y_discrete(limits = seq(from = min, to = max, by = 0.5)) +
+      labs(title = paste("CMP -", rv$selectedDataType),
            x = "Date",
-           y = "WBC (10^3/uL)") +
+           y = rv$selectedDataType) +
       theme_bw() +
       theme(plot.title = element_text(hjust = 0.5, size = 18),
             axis.title.x = element_text(size = 16),
@@ -373,18 +388,16 @@ server <- function(input, output, session) {
             axis.title.y = element_text(size = 16),
             axis.text.y = element_text(size = 12, margin = margin(l = 15)),
             axis.ticks.length = unit(.25, "cm"))
-    fig = ggplotly(fig) %>% layout(height = 600)
+    fig = ggplotly(fig, height = 600) #%>% layout(height = 600)
     return(fig)
   }
   
   
   output$plot = renderPlotly(
-    makePlot()
+    if (!is.null(rv$selectedDataType)) {
+      makePlot()
+    }
   )
-  
-  output$plotDataType = renderUI({
-    selectInput(inputId = "dataType", label = "Data Type:", choices = dataTypes[[rv$selectedTestType]])
-  })
 }
 
 shinyApp(ui, server)
