@@ -71,15 +71,9 @@ ui <- fluidPage (
                               buttonLabel = "BROWSE",
                               placeholder = "No Image"
                             ),
-                            tags$div(style  = "font-size:18px;",
-                                     textInput("size", "Size", value = "200x400")),
-                            actionButton("rotateButton", "Rotate Clockwise 90\u00b0",
-                                         icon("sync"))
-                          ),
-                          tags$h4("Selected Area"),
-                          verbatimTextOutput("coordstext"),
-                          dateInput(inputId = "testDate", label = "Input the date of the test", format = "yyyy-mm-dd"),
-                          actionButton("goToVerificationTab", "Next")
+                            uiOutput("imageEditing")
+                            
+                          )
                         ), 
                         mainPanel(      
                           skin = "black",
@@ -166,7 +160,9 @@ ui <- fluidPage (
 # server ----------
 server <- function(input, output, session) {
   # global variables ----------
-  rv <- reactiveValues(data=NULL, rotate = NULL, rotatedImage = NULL, selectedTest = NULL, selectedDataType = NULL, login = FALSE, currDF = NULL, testDate = NULL)
+  rv <- reactiveValues(data=NULL, rotate = NULL, rotatedImage = NULL, selectedTest = NULL, 
+                       selectedDataType = NULL, login = FALSE, currDF = NULL, testDate = NULL,
+                       readyToEditImages = FALSE, imageSize = NULL, originalImage = NULL)
   
   image <- image_read("DefaultImage.png")
   
@@ -255,12 +251,32 @@ server <- function(input, output, session) {
   )
   
   # upload data tab ------------
+  
+  
   observeEvent(input$upload, {
     if (length(input$upload$datapath)) {
       image <<- image_read(input$upload$datapath)
+      rv$originalImage <- image_read(input$upload$datapath)
       info   <- image_info(image)
-      updateTextInput(session, "size", value = paste(info$width, info$height, sep = "x"))
+      rv$imageSize =  paste(info$width, info$height, sep = "x")
+      #updateTextInput(session, "size", value = paste(info$width, info$height, sep = "x"))
     }
+    
+    output$imageEditing <- renderUI({
+      rv$readyToEditImages = TRUE
+      tagList(
+        #textInput("size", "Size", value = "200x400"),                                    
+        sliderInput("imageSizeSlider", label = "Change Image Size", min = 25, max = 200, value = 100),
+        br(),
+        actionButton("rotateButton", "Rotate Clockwise 90\u00b0",
+                     icon("sync")),
+        #tags$h4("Selected Area"),
+        #verbatimTextOutput("coordstext"),
+        br(),br(),
+        dateInput(inputId = "testDate", label = "Input the date of the test", format = "yyyy-mm-dd"),
+        actionButton("goToVerificationTab", "Next")
+      )
+    })
   })
   
   observeEvent(input$testDate,{
@@ -277,18 +293,28 @@ server <- function(input, output, session) {
   })
   
   output$image <- renderImage({
-    width   <- session$clientData$output_image_width
     height  <- session$clientData$output_image_height
-    img <- image %>% image_resize(input$size) 
+    width <- input$size
+    img <- image %>% image_resize(rv$imageSize) 
+    
+    if(rv$readyToEditImages == TRUE){
+      if(!is.null(input$imageSizeSlider)){
+        if(input$imageSizeSlider != "100"){
+          width <- paste0(input$imageSizeSlider, "%") 
+          img <- rv$originalImage %>% image_resize(width) 
+        }
+      }
+    }
     if (!is.null(rv$rotate)){
       img <- image_rotate(img, 90 * input$rotateButton)
       rv$rotate = NULL
+      rv$originalImage <- img
       info <- image_info(img)
       updateTextInput(session, "size", value = paste(info$width, info$height, sep = "x"))
     }
     image <<- img
     img <- image_write(img, tempfile(fileext = 'jpg'), format = 'jpg') 
-    list(src = img, contentType = "image/jpeg")  # width = "100%" makes the image fit the size of the mainPanel, but it messes up rotation and tesseract
+    list(src = img, contentType = "image/jpeg")
   })
   
   
@@ -302,18 +328,18 @@ server <- function(input, output, session) {
     # "500x300+10+20" – Crop image to 500 by 300 at position 10,20
   })
   
-  output$coordstext <- renderText({
-    if (is.null(input$image_brush$xmin)) {
-      "No Area Selected!"
-    } else {
-      coords()}
-  })
+  #output$coordstext <- renderText({
+  #  if (is.null(input$image_brush$xmin)) {
+  #    "No Area Selected!"
+  #  } else {
+  #    coords()}
+  #})
   
   output$ocr_text <- renderText({
     req(input$image_brush)
     image <- image
     print('parsing text')
-    text   <- image %>% #image_resize(paste(image$width, image$height, sep = "x")) %>%
+    text   <- image %>% 
       image_crop(coords(), repage = FALSE) %>%
       data_selection_ocr()#image_ocr()
     imageData <<- text
@@ -339,6 +365,7 @@ server <- function(input, output, session) {
   })
   
   output$verificationTable = renderRHandsontable({
+    
     if (input$testType == "CBC (Complete Blood Count)") {
       cbc = (rv$data)[[1]][,2]
       values = (rv$data)[[1]][,3]
