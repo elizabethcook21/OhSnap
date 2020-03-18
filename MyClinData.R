@@ -30,9 +30,48 @@ data_selection_ocr <- function (image, whitelist = "ABCDEFGHIJKLMNOPQRSTUVWXYZab
   ocr(image, engine = allowed_chars, HOCR = HOCR)
 }
 
-dataTypes = list(CMP = c("WBC", "RBC", "HGB", "HCT", "MCV", "MCH", "MCHC", "PLT", "RDW-SD", "RDW-CV", "MPV", "NEUT", "LYMPH", "MONO", "EO", "BASO"), 
-                 CBC = c("Na", "K","Cl", "ECO2", "AGAP", "AHOL", "TBI", "TP", "GLOB", "ALPI","TGL", "CHOL", "AST", "ALTI", "ALB", "A/G", "GLUC", "BUN", "CA", "CRE2", "BN/CR"))
+dataTypes = list(CBC = c("WBC", "RBC", "HGB", "HCT", "MCV", "MCH", "MCHC", "PLT", "RDW-SD", "RDW-CV", "MPV", "NEUT", "LYMPH", "MONO", "EO", "BASO"), 
+                 CMP = c("Na", "K","Cl", "ECO2", "AGAP", "AHOL", "TBI", "TP", "GLOB", "ALPI","TGL", "CHOL", "AST", "ALTI", "ALB", "A/G", "GLUC", "BUN", "CA", "CRE2", "BN/CR"))
 
+dataInfo = list(# CBC types
+                WBC = c("White Blood Cells", "10^3/uL"),
+                RBC = c("Red Blood Cells",  "10^6/uL"),
+                HGB = c("Hemoglobin", "g/dL"),
+                HCT = c("Hematocrit", "%"),
+                MCV = c("Mean Corpuscular Volume", "pg"),
+                MCH = c("Mean Corpuscular Hemoglobin", "pg"),
+                MCHC = c("Mean Corpuscular Hemoglobin Concentration", "g/dL"),
+                PLT = c("Platelets", "10^3/uL"),
+                `RDW-SD` = c("Red Blood Cell Distribution Width", "fL"),
+                `RDW-CV` = c("Red Blood Cell Distribution Width", "%"),
+                MPV = c("Mean Platelet Volume", "fL"),
+                NEUT = c("Neutrophils", "%"),
+                LYMPH = c("Lymphocytes", "%"),
+                MONO = c("Monocytes", "%"),
+                EO = c("Esinophils", "%"),
+                BASO = c("Basophils", "%"),
+                # CMP types
+                Na = c("Sodium", "mmol/L"),
+                K = c("Potassium", "mmol/L"),
+                Cl = c("Chloride", "mmol/L"),
+                ECO2 = c("Enzymatic Carbonate", "mmol/L"),
+                AGAP = c("Anion Gap", "mmol/L"),
+                AHDL = c("High-Density Lipoprotein", "mg/dL"),
+                TBI = c("Total Bilirubin", "mg/dL"),
+                TP = c("Total Protein", "g/dL"),
+                GLOB = c("Globulin", "g/dL"),
+                ALPI = c("Alkaline Phosphatase", "units/L"),
+                TGL = c("Triglycerides", "mg/dL"),
+                CHOL = c("Cholesterol", "mg/dL"),
+                AST = c("Aspartate Aminotransferase", "units/L"),
+                ALTI = c("Alanine Aminotransferase", "units/L"),
+                ALB = c("Albumin", "g/dL"),
+                `A/G` = c("Antigen", "No units"),
+                GLUC = c("Glucose", "mg/dL"),
+                BUN = c("Blood Urea Nitrogen", "mg/dL"),
+                CA = c("Calcium", "mg/dL"),
+                CRE2 = c("Creatinine", "mg/dL"),
+                `BN/CR` = c("", "No units"))
 
 # ui ----------
 ui <- fluidPage (
@@ -102,14 +141,14 @@ ui <- fluidPage (
                                                 height = "auto"
                                               ),
                                               title = "Click & Drag Over Image")
-                          )),
-                          fluidRow(column(width = 12,
-                                          box(width = 12,
-                                              textOutput("ocr_text"),
-                                              verbatimTextOutput("text_extract"),
-                                              title = "Text Output"
-                                          )
                           ))
+                          # fluidRow(column(width = 12,
+                          #                 box(width = 12,
+                          #                     textOutput("ocr_text"),
+                          #                     verbatimTextOutput("text_extract"),
+                          #                     title = "Text Output"
+                          #                 )
+                          # ))
                         )
                       )
              ),
@@ -119,6 +158,7 @@ ui <- fluidPage (
                sidebarLayout(
                  sidebarPanel(h2("Verification"),
                               imageOutput("croppedImage"),
+                              br(),
                               actionButton("goToGraphsTab", "Next")),
                  mainPanel(p("Verify that the data in the table below exactly matches the data in the image. 
                              Right-click in a cell to enable a context menu that includes customizable table actions."),
@@ -171,9 +211,6 @@ server <- function(input, output, session) {
   
   imageData <- NULL
   
-  testData = data.frame(Date = c("2019-8-14", "2019-9-23", "2019-10-25", "2019-11-22", "2019-12-19", "2020-1-31", "2020-2-14", "2020-2-21"),
-                        WBC = c(6.26, 6.7, 7.05, 6.33, 5.58, 6.13, 6.18, 6.14))
-  
   # Google Login Code -------------------------------------------------
   accessToken <- callModule(googleAuth, "gauth_login",
                             login_class = "btn btn-primary",
@@ -215,7 +252,7 @@ server <- function(input, output, session) {
                             following the instructions for the continuing user below."),
                           h4("Continuing User:"),
                           p("Please select which type of test you are planning on uploading:"),
-                          selectInput(inputId = "testType", label = "Tests:", choices = c("CBC (Complete Blood Count)", "CMP (Complete Metabolic Panel)")),
+                          selectInput(inputId = "testType", label = "Tests:", choices = c("CBC (Complete Blood Count)", "CMP (Comprehensive Metabolic Panel)")),
                           p("Now, please navigate to the file you wish to have your data added to and put the path in the following text box:"),
                           fileInput("infile", "Pleaseupload corresponding file", placeholder = "Browse for file"),
                           footer = tagList(
@@ -254,8 +291,6 @@ server <- function(input, output, session) {
   )
   
   # upload data tab ------------
-  
-  
   observeEvent(input$upload, {
     if (length(input$upload$datapath)) {
       image <<- image_read(input$upload$datapath)
@@ -273,9 +308,10 @@ server <- function(input, output, session) {
         br(),
         actionButton("rotateButton", "Rotate Clockwise 90\u00b0",
                      icon("sync")),
-        #tags$h4("Selected Area"),
-        #verbatimTextOutput("coordstext"),
         br(),br(),
+        tags$b("Text Output"),
+        textOutput("ocr_text"),
+        br(),
         dateInput(inputId = "testDate", label = "Input the date of the test", format = "yyyy-mm-dd"),
         actionButton("goToVerificationTab", "Next")
       )
@@ -374,7 +410,7 @@ server <- function(input, output, session) {
       values = (rv$data)[[1]][,3]
       clinDF = data.frame(CBC = cbc, Value = as.numeric(values))
       clinDF$CBC = as.character(clinDF$CBC)
-    } else if (input$testType == "CMP (Complete Metabolic Panel)") {
+    } else if (input$testType == "CMP (Comprehensive Metabolic Panel)") {
       cmp = (rv$data)[[1]][,2]
       values = (rv$data)[[1]][,3]
       clinDF = data.frame(CMP = cmp, Value = as.numeric(values))
@@ -402,18 +438,18 @@ server <- function(input, output, session) {
   makePlot = function() {
     df = select(rv$currDF, Date, UQ(as.name(rv$selectedDataType)))
     df$Date = as.Date(df$Date)
-    print(df)
-    min = floor(min(df[rv$selectedDataType]))
-    max = ceiling(max(df[rv$selectedDataType]))
+    # min = floor(min(df[rv$selectedDataType]))
+    # max = ceiling(max(df[rv$selectedDataType]))
+    info = dataInfo[[rv$selectedDataType]]
     
     fig = ggplot(df, aes(x = Date, y = UQ(as.name(rv$selectedDataType)))) +
       geom_point() +
       geom_line() +
       scale_x_date(date_labels = "%b %Y", date_breaks = "1 month") +
-      scale_y_discrete(limits = seq(from = min, to = max, by = 0.5)) +
-      labs(title = paste(rv$selectedTest, "-", rv$selectedDataType),
+      scale_y_discrete(limits = seq(from = floor(min(df[rv$selectedDataType])), to = ceiling(max(df[rv$selectedDataType])), by = 0.5)) +
+      labs(title = paste0(rv$selectedTest, " - ", info[1], " (", rv$selectedDataType, ")"),
            x = "Date",
-           y = rv$selectedDataType) +
+           y = paste0(rv$selectedDataType, " (", info[2], ")")) +
       theme_bw() +
       theme(plot.title = element_text(hjust = 0.5, size = 18),
             axis.title.x = element_text(size = 16),
