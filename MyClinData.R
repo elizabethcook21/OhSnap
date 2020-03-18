@@ -369,14 +369,15 @@ server <- function(input, output, session) {
     if (input$testType == "CBC (Complete Blood Count)") {
       cbc = (rv$data)[[1]][,2]
       values = (rv$data)[[1]][,3]
-      clinDF = data.frame(CBC = cbc, Value = values)
+      clinDF = data.frame(CBC = as.character(cbc), Value = as.numeric(values))
     } else if (input$testType == "CMP (Complete Metabolic Panel)") {
       cmp = (rv$data)[[1]][,2]
       values = (rv$data)[[1]][,3]
-      clinDF = data.frame(CMP = cmp, Value = values)
+      clinDF = data.frame(CMP = as.character(cmp), Value = as.numeric(values))
     }
-    if(!is.null(clinDF))
+    if(!is.null(clinDF)) {
       rhandsontable(clinDF, rowHeaders = NULL)
+    }
   })
   
   observeEvent(input$goToGraphsTab, {
@@ -405,7 +406,7 @@ server <- function(input, output, session) {
       geom_line() +
       scale_x_date(date_labels = "%b %Y", date_breaks = "1 month") +
       scale_y_discrete(limits = seq(from = min, to = max, by = 0.5)) +
-      labs(title = paste("CMP -", rv$selectedDataType),
+      labs(title = paste(rv$selectedTest, "-", rv$selectedDataType),
            x = "Date",
            y = rv$selectedDataType) +
       theme_bw() +
