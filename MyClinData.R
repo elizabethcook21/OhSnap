@@ -117,9 +117,12 @@ ui <- fluidPage (
              tabPanel(
                title = "Verification", value = "verification",
                sidebarLayout(
-                 sidebarPanel(imageOutput("croppedImage"),
+                 sidebarPanel(h2("Verification"),
+                              imageOutput("croppedImage"),
                               actionButton("goToGraphsTab", "Next")),
-                 mainPanel(rHandsontableOutput("verificationTable"))
+                 mainPanel(p("Verify that the data in the table below exactly matches the data in the image. 
+                             Right-click in a cell to enable a context menu that includes customizable table actions."),
+                           rHandsontableOutput("verificationTable"))
                )
              ),  
              # * graphical display tab ----------
@@ -369,14 +372,16 @@ server <- function(input, output, session) {
     if (input$testType == "CBC (Complete Blood Count)") {
       cbc = (rv$data)[[1]][,2]
       values = (rv$data)[[1]][,3]
-      clinDF = data.frame(CBC = as.character(cbc), Value = as.numeric(values))
+      clinDF = data.frame(CBC = cbc, Value = as.numeric(values))
+      clinDF$CBC = as.character(clinDF$CBC)
     } else if (input$testType == "CMP (Complete Metabolic Panel)") {
       cmp = (rv$data)[[1]][,2]
       values = (rv$data)[[1]][,3]
-      clinDF = data.frame(CMP = as.character(cmp), Value = as.numeric(values))
+      clinDF = data.frame(CMP = cmp, Value = as.numeric(values))
+      clinDF$CMP = as.character(clinDF$CMP)
     }
     if(!is.null(clinDF)) {
-      rhandsontable(clinDF, rowHeaders = NULL)
+      rhandsontable(clinDF, rowHeaders = NULL, width = 300)
     }
   })
   
