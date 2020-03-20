@@ -81,7 +81,7 @@ ui <- fluidPage (
   ),
   useShinyjs(),
   #shinythemes::themeSelector(),
-  navbarPage(theme = shinytheme("flatly"), title = "MyClinData", id = 'tabs',
+  navbarPage(theme = shinytheme("flatly"), title = "OhSnap!", id = 'tabs',
              # * login tab ----------
              tabPanel(
                title = "Login",  value = "login",
@@ -191,8 +191,8 @@ ui <- fluidPage (
                                       under the direction of Dr. Samuel Payne for the 2020 Winter BYU Capstone class.
                                      For questions and comments, please visit', 
                                      '<a target="_blank", href="https://biology.byu.edu/sam-payne-lab">https://biology.byu.edu/sam-payne-lab</a>.',
-                                     '<p>The source code for MyClinData can be found at', 
-                                     '<a target="_blank", href="https://github.com/elizabethcook21/MyClinData">https://github.com/elizabethcook21/MyClinData</a>.</p></div>'))
+                                     '<p>The source code for OhSnap can be found at', 
+                                     '<a target="_blank", href="https://github.com/elizabethcook21/OhSnap">https://github.com/elizabethcook21/OhSnap</a>.</p></div>'))
                         )
                         
                       )
@@ -244,7 +244,7 @@ server <- function(input, output, session) {
     showModal(modalDialog(title = tags$b("Store Data on your Personal Computer"),
                           h4("First Time User:"),
                           p("If this is your first time using the app, please navigate to a location on your
-                          computer that you wish to store your test results and make a folder called \"MyClinData\"."),
+                          computer that you wish to store your test results and make a folder called \"OhSnapData\"."),
                           p("Once you're done, please click the following button and navigate to the folder you just made. 
                           Clicking the button will generate excel sheets that will be host the data you upload in this app."),
                           downloadButton("makeFiles", "Make Excel Files"),
@@ -273,7 +273,7 @@ server <- function(input, output, session) {
 
   # Make Zipped fie
   output$makeFiles <- downloadHandler(
-    filename = "MyClinData.zip",
+    filename = "OhSnapData.zip",
     content = function(file) {
       files <- NULL
       for (i in 1:length(dataTypes)){
