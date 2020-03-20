@@ -159,7 +159,7 @@ ui <- fluidPage (
                  sidebarPanel(h2("Verification"),
                               imageOutput("croppedImage"),
                               br(),
-                              actionButton("goToGraphsTab", "Next")),
+                              actionButton("goToGraphsTab", "Validate and Continue")),
                  mainPanel(p("Verify that the data in the table below exactly matches the data in the image. 
                              Right-click in a cell to enable a context menu that includes customizable table actions."),
                            rHandsontableOutput("verificationTable"))
@@ -422,7 +422,8 @@ server <- function(input, output, session) {
   })
   
   observeEvent(input$goToGraphsTab, {
-    updateTabsetPanel(session, "tabs", selected = "graphs")
+    #if(mode ==)
+    updateTabsetPanel(session, "tabs", selected = "graphs") #change from Verification tab to Graphical Display Tab
   }) 
   
   # graphical display tab ----------
