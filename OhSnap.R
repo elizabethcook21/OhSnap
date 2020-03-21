@@ -23,7 +23,7 @@ options("googleAuthR.webapp.client_id" = "543814214955-9u26dmgeaoo8p03fna1gc11on
 options("googleAuthR.webapp.client_secret" = "4mbPAzE7UFZjTFYGcjPS1MYS")
 
 #as adapted from 'image_ocr' in package:magick
-data_selection_ocr <- function (image, whitelist = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.^%[]/-", HOCR = FALSE, ...) 
+data_selection_ocr <- function (image, whitelist = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.-", HOCR = FALSE, ...) 
 {
   #assert_image(image)
   allowed_chars = tesseract(options = list(tessedit_char_whitelist = whitelist))
@@ -159,10 +159,11 @@ ui <- fluidPage (
                  sidebarPanel(h2("Verification"),
                               imageOutput("croppedImage"),
                               br(),
-                              actionButton("goToGraphsTab", "Next")),
+                              actionButton("goToGraphsTab", "Validate and Continue")),
                  mainPanel(p("Verify that the data in the table below exactly matches the data in the image. 
                              Right-click in a cell to enable a context menu that includes customizable table actions."),
-                           rHandsontableOutput("verificationTable"))
+                           fluidRow(column(3,rHandsontableOutput("referenceTable")),
+                                    column(3,rHandsontableOutput("verificationTable"))))
                )
              ),  
              # * graphical display tab ----------
@@ -364,7 +365,7 @@ server <- function(input, output, session) {
     dy  <- round(input$image_brush$ymin, digits = 2)
     coords <- paste0(w, "x", h, "+", dw, "+", dy)
     return(coords)
-    # "500x300+10+20" – Crop image to 500 by 300 at position 10,20
+    # "500x300+10+20" Crop image to 500 by 300 at position 10,20
   })
   
   #output$coordstext <- renderText({
@@ -403,8 +404,12 @@ server <- function(input, output, session) {
     list(src = croppedImg, width = "100%", height = "100%", contentType = "image/jpeg", alt = "This is the selected area of the original image")
   })
   
+  output$referenceTable = renderRHandsontable({
+    rhandsontable(data.frame(Expected = colnames(currDF)[-1]),rowHeaders = NULL, width = 300)%>%
+      hot_col(col = "Expected", readOnly = TRUE) #make the reference column read only
+  })
+  
   output$verificationTable = renderRHandsontable({
-    
     if (input$testType == "CBC (Complete Blood Count)") {
       cbc = (rv$data)[[1]][,2]
       values = (rv$data)[[1]][,3]
@@ -422,7 +427,9 @@ server <- function(input, output, session) {
   })
   
   observeEvent(input$goToGraphsTab, {
-    updateTabsetPanel(session, "tabs", selected = "graphs")
+    #if(mode == Google) #check to see if we are logged on through google or what
+    #print(rv$currDF[0,1:9])
+    updateTabsetPanel(session, "tabs", selected = "graphs") #change from Verification tab to Graphical Display Tab
   }) 
   
   # graphical display tab ----------
