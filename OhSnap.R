@@ -405,7 +405,7 @@ server <- function(input, output, session) {
   })
   
   output$referenceTable = renderRHandsontable({
-    rhandsontable(data.frame(Expected = colnames(currDF)[-1]),rowHeaders = NULL, width = 300)%>%
+    rhandsontable(data.frame(Expected = colnames(rv$currDF)[-1]),rowHeaders = NULL, width = 300)%>%
       hot_col(col = "Expected", readOnly = TRUE) #make the reference column read only
   })
   
