@@ -401,7 +401,7 @@ server <- function(input, output, session) {
   output$croppedImage = renderImage({
     croppedImg = image_crop(image, coords(), repage = FALSE)
     croppedImg = image_write(croppedImg, tempfile(fileext = 'jpg'), format = 'jpg') 
-    list(src = croppedImg, width = "100%", height = "100%", contentType = "image/jpeg", alt = "This is the selected area of the original image")
+    list(src = croppedImg, width = "auto", height = "auto", contentType = "image/jpeg", alt = "This is the selected area of the original image")
   })
   
   output$referenceTable = renderRHandsontable({
