@@ -88,7 +88,7 @@ ui <- fluidPage (
                fluidRow(
                  align = "center",
                  br(), br(),
-                 tags$img(src = 'TempLogo.jpg', align = "center", height = "300px"),
+                 tags$img(src = 'TempLogo.png', align = "center", height = "300px"),
                  br(),
                  actionButton("personal", label = "Store on Personal Computer"),
                  br(), br(),
