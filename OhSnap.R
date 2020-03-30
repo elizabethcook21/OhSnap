@@ -95,7 +95,7 @@ ui <- fluidPage (
                  googleAuthUI("gauth_login"))   
              ),
              # * upload data tab ----------
-             tabPanel('Upload Data', value = 'uploadData',
+             tabPanel('Upload Image', value = 'uploadData',
                       sidebarLayout(
                         sidebarPanel(
                           tags$div(id = "headertitle",
@@ -303,9 +303,9 @@ server <- function(input, output, session) {
         actionButton("rotateButton", "Rotate Clockwise 90\u00b0",
                      icon("sync")),
         br(),br(),
-        tags$b("Text Output"),
-        textOutput("ocr_text"),
-        br(),
+        # tags$b("Text Output"),
+        # textOutput("ocr_text"),
+        # br(),
         selectInput(inputId = "sexType", label = "Select your sex", choices = c("Female", "Male")),
         dateInput(inputId = "testDate", label = "Input the date of the test", format = "yyyy-mm-dd"),
         actionButton("goToVerificationTab", "Next")
