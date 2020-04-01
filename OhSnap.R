@@ -165,7 +165,8 @@ ui <- fluidPage (
                sidebarLayout(
                  sidebarPanel(
                    tags$h2("View Your Data"),
-                   uiOutput("selectedDataType")
+                   uiOutput("selectedDataType"),
+                   uiOutput("dataInfo")
                  ),
                  mainPanel(
                   tags$div(class = "plot",
@@ -201,8 +202,9 @@ server <- function(input, output, session) {
                        selectedDataType = NULL, login = FALSE, currDF = NULL, testDate = NULL,
                        readyToEditImages = FALSE, imageSize = NULL, originalImage = NULL)
   
-  image <- image_read("DefaultImage.png")
+  dataDescriptions = read_tsv("Data_Info.tsv")
   
+  image <- image_read("DefaultImage.png")
   imageData <- NULL
   
   # Google Login Code -------------------------------------------------
@@ -438,6 +440,17 @@ server <- function(input, output, session) {
   
   observeEvent(input$dataType, {
     rv$selectedDataType = input$dataType
+  })
+  
+  output$dataInfo = renderUI({
+    if (rv$selectedTest == "CBC") {
+      HTML(paste("<strong>Complete Blood Count</strong><br/>", 
+                 dataDescriptions$Description[dataDescriptions$ID == "CBC"],
+                 "<br/><br/><strong>", dataInfo[[rv$selectedDataType]]$def, 
+                 "</strong><br/>",  dataDescriptions$Description[dataDescriptions$ID == rv$selectedDataType],
+                 "<br/><br/><strong>Normal Range(s)</strong><br/>", 
+                 dataDescriptions$Range[dataDescriptions$ID == rv$selectedDataType]))
+    }
   })
   
   getIncrementSize = function(min, max) {
