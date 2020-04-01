@@ -34,44 +34,44 @@ dataTypes = list(CBC = c("WBC", "RBC", "HGB", "HCT", "MCV", "MCH", "MCHC", "PLT"
                  CMP = c("Na", "K","Cl", "ECO2", "AGAP", "AHOL", "TBI", "TP", "GLOB", "ALPI","TGL", "CHOL", "AST", "ALTI", "ALB", "A/G", "GLUC", "BUN", "CA", "CRE2", "BN/CR"))
 
 dataInfo = list(# CBC types
-                WBC = c("White Blood Cells", "10^3/uL"),
-                RBC = c("Red Blood Cells",  "10^6/uL"),
-                HGB = c("Hemoglobin", "g/dL"),
-                HCT = c("Hematocrit", "%"),
-                MCV = c("Mean Corpuscular Volume", "pg"),
-                MCH = c("Mean Corpuscular Hemoglobin", "pg"),
-                MCHC = c("Mean Corpuscular Hemoglobin Concentration", "g/dL"),
-                PLT = c("Platelets", "10^3/uL"),
-                `RDW-SD` = c("Red Blood Cell Distribution Width", "fL"),
-                `RDW-CV` = c("Red Blood Cell Distribution Width", "%"),
-                MPV = c("Mean Platelet Volume", "fL"),
-                NEUT = c("Neutrophils", "%"),
-                LYMPH = c("Lymphocytes", "%"),
-                MONO = c("Monocytes", "%"),
-                EO = c("Esinophils", "%"),
-                BASO = c("Basophils", "%"),
+                WBC = list(def = "White Blood Cell Count", units = "10^3/uL", adult = c(4.5, 10)),
+                RBC = list(def = "Red Blood Cell Count",  units = "10^6/uL", male = c(4.5, 5.9), female = c(4.1, 5.1)),
+                HGB = list(def = "Hemoglobin", units = "g/dL", male = c(14, 17.5), female = c(12.3, 15.3)),
+                HCT = list(def = "Hematocrit", units = "%", male = c(41.5, 50.4), female = c(36.9, 44.6)),
+                MCV = list(def = "Mean Corpuscular Volume", units = "pg", adult = c(80, 96)),
+                MCH = list(def = "Mean Corpuscular Hemoglobin", units = "pg", adult = c(27, 33)),
+                MCHC = list(def = "Mean Corpuscular Hemoglobin Concentration", units = "g/dL", adult = c(31, 37)),
+                PLT = list(def = "Platelet Count", units = "10^3/uL", adult = c(150, 450)),
+                `RDW-SD` = list(def = "Red Blood Cell Distribution Width", units = "fL", adult = c(40, 55)),
+                `RDW-CV` = list(def = "Red Blood Cell Distribution Width", units = "%", adult = c(11, 15)),
+                MPV = list(def = "Mean Platelet Volume", units = "fL", adult = c(9.4, 12.3)),
+                NEUT = list(def = "Neutrophils", units = "%", adult = c(40, 60)),
+                LYMPH = list(def = "Lymphocytes", units = "%", adult = c(20, 40)),
+                MONO = list(def = "Monocytes", units = "%", adult = c(2, 8)),
+                EO = list(def = "Esinophils", units = "%", adult = c(1, 4)),
+                BASO = list(def = "Basophils", units = "%", adult = c(0.5, 1)),
                 # CMP types
-                Na = c("Sodium", "mmol/L"),
-                K = c("Potassium", "mmol/L"),
-                Cl = c("Chloride", "mmol/L"),
-                ECO2 = c("Enzymatic Carbonate", "mmol/L"),
-                AGAP = c("Anion Gap", "mmol/L"),
-                AHDL = c("High-Density Lipoprotein", "mg/dL"),
-                TBI = c("Total Bilirubin", "mg/dL"),
-                TP = c("Total Protein", "g/dL"),
-                GLOB = c("Globulin", "g/dL"),
-                ALPI = c("Alkaline Phosphatase", "units/L"),
-                TGL = c("Triglycerides", "mg/dL"),
-                CHOL = c("Cholesterol", "mg/dL"),
-                AST = c("Aspartate Aminotransferase", "units/L"),
-                ALTI = c("Alanine Aminotransferase", "units/L"),
-                ALB = c("Albumin", "g/dL"),
-                `A/G` = c("Antigen", "No units"),
-                GLUC = c("Glucose", "mg/dL"),
-                BUN = c("Blood Urea Nitrogen", "mg/dL"),
-                CA = c("Calcium", "mg/dL"),
-                CRE2 = c("Creatinine", "mg/dL"),
-                `BN/CR` = c("", "No units"))
+                Na = list(def = "Sodium", units = "mmol/L", adult = c(136, 145)),
+                K = list(def = "Potassium", units = "mmol/L", adult = c(3.5, 5.1)),
+                Cl = list(def = "Chloride", units = "mmol/L", adult = c(98, 107)),
+                ECO2 = list(def = "Carbon Dioxide", units = "mmol/L", adult = c(21, 32)),
+                AGAP = list(def = "Anion Gap", units = "mmol/L", adult = c(3, 10)),
+                AHDL = list(def = "High-Density Lipoprotein", units = "mg/dL", adult = c(40, 60)),
+                TBI = list(def = "Total Bilirubin", units = "mg/dL", adult = c(0.2, 1)),
+                TP = list(def = "Total Protein", units = "g/dL", adult = c(6.4, 8.2)),
+                GLOB = list(def = "Globulin", units = "g/dL", adult = c(2, 3.5)),
+                ALPI = list(def = "Alkaline Phosphatase", units = "units/L", adult = c(46, 116)),
+                TGL = list(def = "Triglycerides", units = "mg/dL", adult = c(30, 150)),
+                CHOL = list(def = "Cholesterol", units = "mg/dL", adult = c(0, 200)),
+                AST = list(def = "Aspartate Aminotransferase", units = "units/L", adult = c(15, 37)),
+                ALTI = list(def = "Alanine Aminotransferase", units = "units/L", adult = c(12, 78)),
+                ALB = list(def = "Albumin", units = "g/dL", adult = c(3.4, 5)),
+                `A/G` = list(def = "Albumin/Globulin Ratio", units = "No units"),
+                GLUC = list(def = "Glucose", units = "mg/dL", adult = c(74, 106)),
+                BUN = list(def = "Blood Urea Nitrogen", units = "mg/dL", adult = c(7, 18)),
+                CA = list(def = "Calcium", units = "mg/dL", adult = c(8.5, 10.1)),
+                CRE2 = list(def = "Creatinine", units = "mg/dL", adult = c(0.6, 1.3)),
+                `BN/CR` = list(def = "", units = "No units", adult = c(10, 20)))
 
 # ui ----------
 ui <- fluidPage (
@@ -95,7 +95,7 @@ ui <- fluidPage (
                  googleAuthUI("gauth_login"))   
              ),
              # * upload data tab ----------
-             tabPanel('Upload Data', value = 'uploadData',
+             tabPanel('Upload Image', value = 'uploadData',
                       sidebarLayout(
                         sidebarPanel(
                           tags$div(id = "headertitle",
@@ -142,13 +142,6 @@ ui <- fluidPage (
                                               ),
                                               title = "Click & Drag Over Image")
                           ))
-                          # fluidRow(column(width = 12,
-                          #                 box(width = 12,
-                          #                     textOutput("ocr_text"),
-                          #                     verbatimTextOutput("text_extract"),
-                          #                     title = "Text Output"
-                          #                 )
-                          # ))
                         )
                       )
              ),
@@ -172,7 +165,8 @@ ui <- fluidPage (
                sidebarLayout(
                  sidebarPanel(
                    tags$h2("View Your Data"),
-                   uiOutput("selectedDataType")
+                   uiOutput("selectedDataType"),
+                   uiOutput("dataInfo")
                  ),
                  mainPanel(
                   tags$div(class = "plot",
@@ -204,12 +198,14 @@ ui <- fluidPage (
 # server ----------
 server <- function(input, output, session) {
   # global variables ----------
-  rv <- reactiveValues(data=NULL, rotate = NULL, rotatedImage = NULL, selectedTest = NULL, 
+  rv <- reactiveValues(data=NULL, rotate = NULL, rotatedImage = NULL, selectedTest = NULL, selectedSex = NULL, 
                        selectedDataType = NULL, login = FALSE, currDF = NULL, newRow = NULL, currDFPath = NULL, testDate = NULL,
+
                        readyToEditImages = FALSE, imageSize = NULL, originalImage = NULL)
   
-  image <- image_read("DefaultImage.png")
+  dataDescriptions = read_tsv("Data_Info.tsv")
   
+  image <- image_read("DefaultImage.png")
   imageData <- NULL
   
   # Google Login Code -------------------------------------------------
@@ -313,13 +309,19 @@ server <- function(input, output, session) {
         actionButton("rotateButton", "Rotate Clockwise 90\u00b0",
                      icon("sync")),
         br(),br(),
-        tags$b("Text Output"),
-        textOutput("ocr_text"),
-        br(),
+        # tags$b("Text Output"),
+        # textOutput("ocr_text"),
+        # br(),
+        selectInput(inputId = "sexType", label = "Select your sex", choices = c("Female", "Male")),
         dateInput(inputId = "testDate", label = "Input the date of the test", format = "yyyy-mm-dd"),
         actionButton("goToVerificationTab", "Next")
       )
     })
+  })
+  
+  observeEvent(input$sexType, {
+    rv$selectedSex = tolower(input$sexType)
+    print(rv$selectedSex)
   })
   
   observeEvent(input$testDate,{
@@ -464,24 +466,51 @@ server <- function(input, output, session) {
   
   observeEvent(input$dataType, {
     rv$selectedDataType = input$dataType
-    print(rv$selectedDataType)
   })
+  
+  output$dataInfo = renderUI({
+    if (rv$selectedTest == "CBC") {
+      HTML(paste("<strong>Complete Blood Count</strong><br/>", 
+                 dataDescriptions$Description[dataDescriptions$ID == "CBC"],
+                 "<br/><br/><strong>", dataInfo[[rv$selectedDataType]]$def, 
+                 "</strong><br/>",  dataDescriptions$Description[dataDescriptions$ID == rv$selectedDataType],
+                 "<br/><br/><strong>Normal Range(s)</strong><br/>", 
+                 dataDescriptions$Range[dataDescriptions$ID == rv$selectedDataType]))
+    }
+  })
+  
+  getIncrementSize = function(min, max) {
+    diff = max - min
+    print(diff)
+    if (between(diff, 0, 3)) {
+      increment = 0.25
+    } else if (between(diff, 4, 8)) {
+      increment = 0.5
+    } else if (between(diff, 9, 20)) {
+      increment = 1
+    } else if (between(diff, 21, 40)) {
+      increment = 5
+    } else if (between(diff, 41, 60)){
+      increment = 10
+    } else {
+      increment = 20
+    }
+    return(increment)
+  }
   
   makePlot = function() {
     df = select(rv$currDF, Date, UQ(as.name(rv$selectedDataType)))
     df$Date = as.Date(df$Date)
-    # min = floor(min(df[rv$selectedDataType]))
-    # max = ceiling(max(df[rv$selectedDataType]))
     info = dataInfo[[rv$selectedDataType]]
     
+    # base plot
     fig = ggplot(df, aes(x = Date, y = UQ(as.name(rv$selectedDataType)))) +
       geom_point() +
       geom_line() +
       scale_x_date(date_labels = "%b %Y", date_breaks = "1 month") +
-      scale_y_discrete(limits = seq(from = floor(min(df[rv$selectedDataType])), to = ceiling(max(df[rv$selectedDataType])), by = 0.5)) +
-      labs(title = paste0(rv$selectedTest, " - ", info[1], " (", rv$selectedDataType, ")"),
+      labs(title = paste0(rv$selectedTest, " - ", info$def, " (", rv$selectedDataType, ")"),
            x = "Date",
-           y = paste0(rv$selectedDataType, " (", info[2], ")")) +
+           y = paste0(rv$selectedDataType, " (", info$units, ")")) +
       theme_bw() +
       theme(plot.title = element_text(hjust = 0.5, size = 18),
             axis.title.x = element_text(size = 16),
@@ -489,7 +518,39 @@ server <- function(input, output, session) {
             axis.title.y = element_text(size = 16),
             axis.text.y = element_text(size = 12, margin = margin(l = 15)),
             axis.ticks.length = unit(.25, "cm"))
-    fig = ggplotly(fig, height = 600) #%>% layout(height = 600)
+    
+    # add normal ranges
+    if (length(info) > 2) {  # if normal range exists
+      if (length(info) > 3) {  # if separate normal ranges exist for male and female
+        adult = as.numeric(info[[rv$selectedSex]])
+        min = floor(min(c(adult, pull(df, rv$selectedDataType))))
+        max = ceiling(max(c(adult, pull(df, rv$selectedDataType))))
+        incrementSize = getIncrementSize(min, max)
+        fig = fig +
+          geom_hline(yintercept = adult[1], linetype = "dashed", color = "green") +
+          geom_hline(yintercept = adult[2], linetype = "dashed", color = "green") +
+          scale_y_continuous(limits = c(floor(min), ceiling(max)), 
+                             breaks = seq(floor(min), ceiling(max), by = incrementSize))
+      } else {  # else if only general normal range exists with no specificity to sex
+        min = floor(min(c(as.numeric(info$adult[1]), pull(df, rv$selectedDataType))))
+        max = ceiling(max(c(as.numeric(info$adult[2]), pull(df, rv$selectedDataType))))
+        incrementSize = getIncrementSize(min, max)
+        fig = fig +
+          geom_hline(yintercept = min, linetype = "dashed", color = "green") +
+          geom_hline(yintercept = max, linetype = "dashed", color = "green", ) +
+          scale_y_continuous(limits = c(floor(min), ceiling(max)), 
+                             breaks = seq(floor(min), ceiling(max), by = incrementSize))
+      }
+    } else {  # else if no normal range exists
+      min = floor(min(df[rv$selectedDataType]))
+      max = ceiling(max(df[rv$selectedDataType]))
+      incrementSize = getIncrementSize(min, max)
+      fig = fig +
+        scale_y_continuous(limits = c(min, max), 
+                           breaks = seq(min, max, by = incrementSize))
+    }
+    
+    fig = ggplotly(fig, height = 600)
     return(fig)
   }
   
