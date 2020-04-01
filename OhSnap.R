@@ -198,8 +198,9 @@ ui <- fluidPage (
 # server ----------
 server <- function(input, output, session) {
   # global variables ----------
-  rv <- reactiveValues(data=NULL, rotate = NULL, rotatedImage = NULL, selectedTest = NULL, selectedSex = NULL,
-                       selectedDataType = NULL, login = FALSE, currDF = NULL, testDate = NULL,
+  rv <- reactiveValues(data=NULL, rotate = NULL, rotatedImage = NULL, selectedTest = NULL, selectedSex = NULL, 
+                       selectedDataType = NULL, login = FALSE, currDF = NULL, newRow = NULL, currDFPath = NULL, testDate = NULL,
+
                        readyToEditImages = FALSE, imageSize = NULL, originalImage = NULL)
   
   dataDescriptions = read_tsv("Data_Info.tsv")
@@ -258,7 +259,10 @@ server <- function(input, output, session) {
   })
   
   observeEvent(input$infile, {
+    rv$currDFPath = input$infile$datapath
     rv$currDF <- read_excel(input$infile$datapath)
+    #file <- system.file("tests", "test_import.xlsx", package = "xlsx")
+    #res <- read.xlsx(file, 1)  # read first sheet
   })
   
   observeEvent(input$continueToUpload, {
@@ -406,8 +410,10 @@ server <- function(input, output, session) {
   })
   
   output$referenceTable = renderRHandsontable({
-    rhandsontable(data.frame(Expected = colnames(rv$currDF)[-1]),rowHeaders = NULL, width = 300)%>%
-      hot_col(col = "Expected", readOnly = TRUE) #make the reference column read only
+    expected_table = data.frame(Expected = (colnames(rv$currDF)[-1]))
+    expected_table$Expected = as.character(expected_table$Expected)
+    rhandsontable(expected_table,rowHeaders = NULL, width = 300)%>%
+      hot_col(col = "Expected", readOnly = TRUE) #make the reference table/column read only
   })
   
   output$verificationTable = renderRHandsontable({
@@ -428,8 +434,28 @@ server <- function(input, output, session) {
   })
   
   observeEvent(input$goToGraphsTab, {
-    #if(mode == Google) #check to see if we are logged on through google or what
-    #print(rv$currDF[0,1:9])
+    newData = as.vector(hot_to_r(input$verificationTable)[,2])
+    print("newdata")
+    print(newData)
+    print("rv$testDate")
+    print(rv$testDate)
+    rv$newRow = c(as.character(rv$testDate), newData)
+    print("rv$newRow")
+    print(rv$newRow)
+    stored_col_names = colnames(rv$currDF) #store the colnames so they don't get overwritten
+    print("stored_col_names")
+    print(stored_col_names)
+    rv$currDF = rbind(rv$currDF, rv$newRow,stringsAsFactors = FALSE)
+    print(" rv$currDF")
+    print( rv$currDF)
+    colnames(rv$currDF) = stored_col_names
+    print(" rv$currDF")
+    print( rv$currDF)
+    print("rv$currDFPath")
+    print(rv$currDFPath)
+    write_xlsx(rv$currDF, rv$currDFPath)
+    print("the file that has been written out")
+    print(read_xlsx(rv$currDFPath))
     updateTabsetPanel(session, "tabs", selected = "graphs") #change from Verification tab to Graphical Display Tab
   }) 
   
