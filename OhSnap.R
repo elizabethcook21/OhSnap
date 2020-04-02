@@ -199,8 +199,8 @@ ui <- fluidPage (
 server <- function(input, output, session) {
   # global variables ----------
   rv <- reactiveValues(data=NULL, rotate = NULL, rotatedImage = NULL, selectedTest = NULL, selectedSex = NULL, 
-                       selectedDataType = NULL, login = FALSE, currDF = NULL, newRow = NULL, currDFPath = NULL, testDate = NULL,
-
+                       selectedDataType = NULL, login = FALSE, currDF = NULL, newRow = NULL, 
+                       currDFPath = NULL, testDate = NULL,
                        readyToEditImages = FALSE, imageSize = NULL, originalImage = NULL)
   
   dataDescriptions = read_tsv("Data_Info.tsv")
@@ -309,9 +309,9 @@ server <- function(input, output, session) {
         actionButton("rotateButton", "Rotate Clockwise 90\u00b0",
                      icon("sync")),
         br(),br(),
-        # tags$b("Text Output"),
-        # textOutput("ocr_text"),
-        # br(),
+        tags$b("Text Output"),
+        textOutput("ocr_text"),
+        br(),
         selectInput(inputId = "sexType", label = "Select your sex", choices = c("Female", "Male")),
         dateInput(inputId = "testDate", label = "Input the date of the test", format = "yyyy-mm-dd"),
         actionButton("goToVerificationTab", "Next")
@@ -380,8 +380,8 @@ server <- function(input, output, session) {
   #    coords()}
   #})
   
-  output$ocr_text <- renderText({
-    req(input$image_brush)
+  observeEvent(input$image_brush,{
+    #req(input$image_brush)
     image <- image
     print('parsing text')
     text   <- image %>% 
