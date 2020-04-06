@@ -495,12 +495,23 @@ server <- function(input, output, session) {
   
   output$dataInfo = renderUI({
     if (rv$selectedTest == "CBC") {
-      HTML(paste("<strong>Complete Blood Count</strong><br/>", 
+      HTML(paste0("<strong>Complete Blood Count</strong><br/>", 
                  dataDescriptions$Description[dataDescriptions$ID == "CBC"],
+                 "<br/><a href='", dataDescriptions$Links[dataDescriptions$ID == "CBC"], "'>See more info</a>",
                  "<br/><br/><strong>", dataInfo[[rv$selectedDataType]]$def, 
                  "</strong><br/>",  dataDescriptions$Description[dataDescriptions$ID == rv$selectedDataType],
+                 "<br/><a href='", dataDescriptions$Links[dataDescriptions$ID == rv$selectedDataType], "'>See more info</a>",
                  "<br/><br/><strong>Normal Range(s)</strong><br/>", 
                  dataDescriptions$Range[dataDescriptions$ID == rv$selectedDataType]))
+    } else if (rv$selectedTest == "CMP") {
+      HTML(paste0("<strong>Comprehensive Metabolic Panel</strong><br/>", 
+                  dataDescriptions$Description[dataDescriptions$ID == "CMP"],
+                  "<br/><a href='", dataDescriptions$Links[dataDescriptions$ID == "CMP"], "'>See more info</a>",
+                  "<br/><br/><strong>", dataInfo[[rv$selectedDataType]]$def, 
+                  "</strong><br/>",  dataDescriptions$Description[dataDescriptions$ID == rv$selectedDataType],
+                  "<br/><a href='", dataDescriptions$Links[dataDescriptions$ID == rv$selectedDataType], "'>See more info</a>",
+                  "<br/><br/><strong>Normal Range(s)</strong><br/>", 
+                  dataDescriptions$Range[dataDescriptions$ID == rv$selectedDataType]))
     }
   })
   
