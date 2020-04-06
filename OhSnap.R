@@ -152,7 +152,10 @@ ui <- fluidPage (
                  sidebarPanel(h2("Verification"),
                               imageOutput("croppedImage"),
                               br(),
-                              actionButton("goToGraphsTab", "Validate and Continue")),
+                              downloadButton("saveData", "Save to Spreadsheet"),
+                              br(),
+                              br(),
+                              actionButton("goToGraphsTab", "Continue")),
                  mainPanel(p("Verify that the data in the table below exactly matches the data in the image. 
                              Right-click in a cell to enable a context menu that includes customizable table actions."),
                            fluidRow(column(3,rHandsontableOutput("referenceTable")),
@@ -198,8 +201,9 @@ ui <- fluidPage (
 # server ----------
 server <- function(input, output, session) {
   # global variables ----------
-  rv <- reactiveValues(data=NULL, rotate = NULL, rotatedImage = NULL, selectedTest = NULL, selectedSex = NULL,
-                       selectedDataType = NULL, login = FALSE, currDF = NULL, testDate = NULL,
+  rv <- reactiveValues(data=NULL, rotate = NULL, rotatedImage = NULL, selectedTest = NULL, selectedSex = NULL, 
+                       selectedDataType = NULL, login = FALSE, currDF = NULL, newRow = NULL, 
+                       currDFPath = NULL, testDate = NULL,
                        readyToEditImages = FALSE, imageSize = NULL, originalImage = NULL)
   
   dataDescriptions = read_tsv("Data_Info.tsv")
@@ -258,7 +262,10 @@ server <- function(input, output, session) {
   })
   
   observeEvent(input$infile, {
+    rv$currDFPath = input$infile$datapath
     rv$currDF <- read_excel(input$infile$datapath)
+    #file <- system.file("tests", "test_import.xlsx", package = "xlsx")
+    #res <- read.xlsx(file, 1)  # read first sheet
   })
   
   observeEvent(input$continueToUpload, {
@@ -305,9 +312,9 @@ server <- function(input, output, session) {
         actionButton("rotateButton", "Rotate Clockwise 90\u00b0",
                      icon("sync")),
         br(),br(),
-        # tags$b("Text Output"),
-        # textOutput("ocr_text"),
-        # br(),
+        tags$b("Text Output"),
+        textOutput("ocr_text"),
+        br(),
         selectInput(inputId = "sexType", label = "Select your sex", choices = c("Female", "Male")),
         dateInput(inputId = "testDate", label = "Input the date of the test", format = "yyyy-mm-dd"),
         actionButton("goToVerificationTab", "Next")
@@ -376,8 +383,8 @@ server <- function(input, output, session) {
   #    coords()}
   #})
   
-  output$ocr_text <- renderText({
-    req(input$image_brush)
+  observeEvent(input$image_brush,{
+    #req(input$image_brush)
     image <- image
     print('parsing text')
     text   <- image %>% 
@@ -406,8 +413,10 @@ server <- function(input, output, session) {
   })
   
   output$referenceTable = renderRHandsontable({
-    rhandsontable(data.frame(Expected = colnames(rv$currDF)[-1]),rowHeaders = NULL, width = 300)%>%
-      hot_col(col = "Expected", readOnly = TRUE) #make the reference column read only
+    expected_table = data.frame(Expected = (colnames(rv$currDF)[-1]))
+    expected_table$Expected = as.character(expected_table$Expected)
+    rhandsontable(expected_table,rowHeaders = NULL, width = 300)%>%
+      hot_col(col = "Expected", readOnly = TRUE) #make the reference table/column read only
   })
   
   output$verificationTable = renderRHandsontable({
@@ -427,9 +436,51 @@ server <- function(input, output, session) {
     }
   })
   
+  output$saveData <- downloadHandler(
+    # filename = paste0("OhSnap_", rv$selectedDataType, rv$testDate, ".xlsx"),
+    filename = paste0("OhSnap_", rv$selectedTest, ".xlsx"),
+    content = function(filePath) {
+      print(rv$selectedDataType)
+      print(rv$selectedTest)
+      newData = as.vector(hot_to_r(input$verificationTable)[,2])
+      print("newdata")
+      print(newData)
+      print("rv$testDate")
+      print(rv$testDate)
+      rv$newRow = c(as.character(rv$testDate), newData)
+      print("rv$newRow")
+      print(rv$newRow)
+      stored_col_names = colnames(rv$currDF) #store the colnames so they don't get overwritten
+      print("stored_col_names")
+      print(stored_col_names)
+      rv$currDF = rbind(rv$currDF, rv$newRow,stringsAsFactors = FALSE)
+      print(" rv$currDF")
+      print( rv$currDF)
+      colnames(rv$currDF) = stored_col_names
+      print(" rv$currDF")
+      print( rv$currDF)
+      print("rv$currDFPath")
+      print(rv$currDFPath)
+      write_xlsx(rv$currDF, filePath)
+      rv$currDF = read_excel(filePath)
+      # print("the file that has been written out")
+      #print(read_xlsx(rv$currDFPath))
+      # files <- NULL
+      # for (i in 1:length(dataTypes)){
+      #   fileName <- paste(names(dataTypes[i]),".xlsx",sep = "")
+      #   data <- c("Date", dataTypes[[i]])
+      #   data <- rbind(data)
+      #   write_xlsx(as.data.frame(data), paste0(fileName), col_names = FALSE, format_headers = FALSE)
+      #   files <- c(fileName, files)
+      # }
+      # zip::zipr(file, files)
+      # if(file.exists(paste0(file, ".xlsx"))) {
+      #   file.rename(paste0(file, "xlsx"), file)
+      # }
+    }
+  )
+  
   observeEvent(input$goToGraphsTab, {
-    #if(mode == Google) #check to see if we are logged on through google or what
-    #print(rv$currDF[0,1:9])
     updateTabsetPanel(session, "tabs", selected = "graphs") #change from Verification tab to Graphical Display Tab
   }) 
   
