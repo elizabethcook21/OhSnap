@@ -94,12 +94,12 @@ ui <- fluidPage (
                  br(), br(),
                  googleAuthUI("gauth_login"))   
              ),
-             # * upload data tab ----------
+             # * upload imagetab ----------
              tabPanel('Upload Image', value = 'uploadData',
                       sidebarLayout(
                         sidebarPanel(
                           tags$div(id = "headertitle",
-                                   tags$h2("Shiny Tesseract"),
+                                   tags$h2("Upload Image"),
                                    tags$div(id="tesseract")),
                           tags$div(
                             id = "header",
@@ -254,7 +254,13 @@ server <- function(input, output, session) {
                           p("Please select which type of test you are planning on uploading:"),
                           selectInput(inputId = "testType", label = "Tests:", choices = c("CBC (Complete Blood Count)", "CMP (Comprehensive Metabolic Panel)")),
                           p("Now, please navigate to the file you wish to have your data added to and put the path in the following text box:"),
-                          fileInput("infile", "Pleaseupload corresponding file", placeholder = "Browse for file"),
+                          fileInput("infile", "Pleaseupload corresponding file", placeholder = "Browse for file", accept=c('application/vnd.ms-excel',
+                                                                                                                           'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                                                                                                                           '.xls',
+                                                                                                                           '.xlsx',
+                                                                                                                           '.csv',
+                                                                                                                           '.tsv')
+                                    ),
                           footer = tagList(
                             actionButton("continueToUpload", "Continue")
                           ),
@@ -262,6 +268,7 @@ server <- function(input, output, session) {
   })
   
   observeEvent(input$infile, {
+    
     rv$currDFPath = input$infile$datapath
     rv$currDF <- read_excel(input$infile$datapath)
     #file <- system.file("tests", "test_import.xlsx", package = "xlsx")
