@@ -17,10 +17,10 @@ library(writexl)
 library(tidyverse)
 
 # Global variables and functions ----------------
-options(googleAuthR.scopes.selected = c("https://www.googleapis.com/auth/userinfo.email",
-                                        "https://www.googleapis.com/auth/userinfo.profile"))
-options("googleAuthR.webapp.client_id" = "543814214955-9u26dmgeaoo8p03fna1gc11ond5md1ta.apps.googleusercontent.com")
-options("googleAuthR.webapp.client_secret" = "4mbPAzE7UFZjTFYGcjPS1MYS")
+#options(googleAuthR.scopes.selected = c("https://www.googleapis.com/auth/userinfo.email",
+#                                        "https://www.googleapis.com/auth/userinfo.profile"))
+#options("googleAuthR.webapp.client_id" = "543814214955-9u26dmgeaoo8p03fna1gc11ond5md1ta.apps.googleusercontent.com")
+#options("googleAuthR.webapp.client_secret" = "4mbPAzE7UFZjTFYGcjPS1MYS")
 
 #as adapted from 'image_ocr' in package:magick
 data_selection_ocr <- function (image, whitelist = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.-", HOCR = FALSE, ...) 
@@ -92,9 +92,9 @@ ui <- fluidPage (
                  br(),
                  actionButton("personal", label = "Store on Personal Computer"),
                  br(), br(),
-                 googleAuthUI("gauth_login"))   
+                 actionButton("gauth_login", label = "Login with Google", style="color: #fff; background-color: #337ab7; border-color: #2e6da4"))   
              ),
-             # * upload imagetab ----------
+             # * upload image tab ----------
              tabPanel('Upload Image', value = 'uploadData',
                       sidebarLayout(
                         sidebarPanel(
@@ -212,16 +212,16 @@ server <- function(input, output, session) {
   imageData <- NULL
   
   # Google Login Code -------------------------------------------------
-  accessToken <- callModule(googleAuth, "gauth_login",
-                            login_class = "btn btn-primary",
-                            logout_class = "btn btn-primary")
-  userDetails <- reactive({
-    validate(
-      need(accessToken(), "not logged in")
-    )
-    rv$login <- TRUE
-    with_shiny(get_user_info, shiny_access_token = accessToken())
-  })
+  # accessToken <- callModule(googleAuth, "gauth_login",
+  #                           login_class = "btn btn-primary",
+  #                           logout_class = "btn btn-primary")
+  # userDetails <- reactive({
+  #   validate(
+  #     need(accessToken(), "not logged in")
+  #   )
+  #   rv$login <- TRUE
+  #   with_shiny(get_user_info, shiny_access_token = accessToken())
+  # })
   
   userDetails <- reactive({
     validate(
@@ -231,13 +231,22 @@ server <- function(input, output, session) {
     with_shiny(get_user_info, shiny_access_token = accessToken())
   })
   
-  observe({
-    if (rv$login) {
-      shinyjs::onclick("gauth_login-googleAuthUi",
-                       shinyjs::runjs("window.location.href = 'https://yourdomain.shinyapps.io/appName';"))
-      print(googledrive::drive_find(""))
-    }
+  observeEvent(input$gauth_login, {
+    showModal(modalDialog(p("Future functionality! Please use personal data for now"),
+                          title = "Google Currently Disabled", footer = modalButton("Dismiss"),
+                          size = c("m", "s", "l"), easyClose = FALSE, fade = FALSE))
   })
+  
+  # observe({
+  #   if (rv$login) {
+  #     showModal(modalDialog(p("Future functionality! Please use personal data for now"),
+  #                           title = "Google Currently Disabled", footer = modalButton("Dismiss"),
+  #                            size = c("m", "s", "l"), easyClose = FALSE, fade = FALSE))
+  #     #shinyjs::onclick("gauth_login-googleAuthUi",
+  #     #                 shinyjs::runjs("window.location.href = 'https://yourdomain.shinyapps.io/appName';"))
+  #     #print(googledrive::drive_find(""))
+  #   }
+  # })
   
   # Personal Data Login Code
   observeEvent(input$personal, {
