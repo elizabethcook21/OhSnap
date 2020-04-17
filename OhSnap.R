@@ -1,34 +1,27 @@
-library(shiny)
-library(magick)
-library(tesseract)
-library(shinydashboard)
-library(shinyjs)
-library(shinycssloaders)
-library(shinythemes)
-library(rhandsontable)
-library(stringr)
-library(ggplot2)
-library(plotly)
-library(googleAuthR)
-library(googlesheets4)
-library(zip)
-library(readxl)
-library(writexl)
-library(tidyverse)
+# Importing External Libraries ------------------------------
+library(shiny)            #for the overall structure/framework of the app
+library(shinydashboard)   #for the tab layout of the app
+library(shinyjs)          #for integrating packages like rhandsontable
+library(shinycssloaders)  
+library(shinythemes)      #for styling the interface
+library(magick)           #for processing the image that the user uploads (size, orientation)
+library(tesseract)        #for automatic optical character recognition
+library(stringr)          #for parsing the text into a table with regular expressions
+library(rhandsontable)    #for the interactive table where the
+library(ggplot2)          #for creating the base plots of the data
+library(plotly)           #for making the plots interactive
+library(googleAuthR)      #for interacting with google authentication servers
+library(googlesheets4)    #for reading and writing google sheets
+library(zip)              #for downloading templates for the user to store their data in
+library(readxl)           #for reading from an existing excel file
+library(writexl)          #for writing the parsed data to an existing excel file
+library(tidyverse)        
 
-# Global variables and functions ----------------
+# Global variables and functions ------------------------------
 #options(googleAuthR.scopes.selected = c("https://www.googleapis.com/auth/userinfo.email",
 #                                        "https://www.googleapis.com/auth/userinfo.profile"))
 #options("googleAuthR.webapp.client_id" = "543814214955-9u26dmgeaoo8p03fna1gc11ond5md1ta.apps.googleusercontent.com")
 #options("googleAuthR.webapp.client_secret" = "4mbPAzE7UFZjTFYGcjPS1MYS")
-
-#as adapted from 'image_ocr' in package:magick
-data_selection_ocr <- function (image, whitelist = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.-", HOCR = FALSE, ...) 
-{
-  #assert_image(image)
-  allowed_chars = tesseract(options = list(tessedit_char_whitelist = whitelist))
-  ocr(image, engine = allowed_chars, HOCR = HOCR)
-}
 
 dataTypes = list(CBC = c("WBC", "RBC", "HGB", "HCT", "MCV", "MCH", "MCHC", "PLT", "RDW-SD", "RDW-CV", "MPV", "NEUT", "LYMPH", "MONO", "EO", "BASO"), 
                  CMP = c("Na", "K","Cl", "ECO2", "AGAP", "AHOL", "TBI", "TP", "GLOB", "ALPI","TGL", "CHOL", "AST", "ALTI", "ALB", "A/G", "GLUC", "BUN", "CA", "CRE2", "BN/CR"))
@@ -73,7 +66,7 @@ dataInfo = list(# CBC types
                 CRE2 = list(def = "Creatinine", units = "mg/dL", adult = c(0.6, 1.3)),
                 `BN/CR` = list(def = "", units = "No units", adult = c(10, 20)))
 
-# ui ----------
+# UI ----------
 ui <- fluidPage (
   tags$head(
     tags$link(rel = "stylesheet", type = "text/css", href = "style.css"),
@@ -198,15 +191,14 @@ ui <- fluidPage (
   )
 )
 
-# server ----------
+# Server ------------------------------
 server <- function(input, output, session) {
   # global variables ----------
-  rv <- reactiveValues(data=NULL, rotate = NULL, rotatedImage = NULL, selectedTest = NULL, selectedSex = NULL, 
+  rv <- reactiveValues(rawData=NULL, rotate = NULL, rotatedImage = NULL, selectedTest = NULL, selectedSex = NULL, 
                        selectedDataType = NULL, login = FALSE, currDF = NULL, testDate = NULL,
                        readyToEditImages = FALSE, imageSize = NULL, originalImage = NULL)
   
   dataDescriptions = read_tsv("Data_Info.tsv")
-  
   image <- image_read("DefaultImage.png")
   imageData <- NULL
   
@@ -285,7 +277,7 @@ server <- function(input, output, session) {
   })
   
 
-  # Make Zipped fie
+  # Make Zipped file containing template spreadsheets for CBC and CMP data
   output$makeFiles <- downloadHandler(
     filename = "OhSnapData.zip",
     content = function(file) {
@@ -394,15 +386,12 @@ server <- function(input, output, session) {
   #})
   
   observeEvent(input$image_brush,{
-    #req(input$image_brush)
-    image <- image
-    text   <- image %>% 
-      image_crop(coords(), repage = FALSE) %>%
-      data_selection_ocr()#image_ocr()
-    imageData <<- text
-    selected_text <- text
-    rv$data <- str_match_all(selected_text, "([A-Za-z-]+)[\\s-]*([0-9.]+)[^\n]*")
-    return(selected_text)
+    croppedImage = image_crop(image, coords(), repage = FALSE)
+    whitelistChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.-"
+    restrictedTesseract = tesseract(options = list(tessedit_char_whitelist = whitelistChars))
+    rawText = ocr(croppedImage, engine = restrictedTesseract, HOCR = FALSE)
+    rowPattern = "([A-Za-z-]+)[\\s-]*([0-9.]+)[^\n]*"
+    rv$rawData <- str_match_all(rawText, rowPattern)
   })
   
   observeEvent(input$rotateButton, {
@@ -429,13 +418,13 @@ server <- function(input, output, session) {
   
   output$verificationTable = renderRHandsontable({
     if (input$testType == "CBC (Complete Blood Count)") {
-      cbc = (rv$data)[[1]][,2]
-      values = (rv$data)[[1]][,3]
+      cbc = (rv$rawData)[[1]][,2]
+      values = (rv$rawData)[[1]][,3]
       clinDF = data.frame(CBC = cbc, Value = as.numeric(values))
       clinDF$CBC = as.character(clinDF$CBC)
     } else if (input$testType == "CMP (Comprehensive Metabolic Panel)") {
-      cmp = (rv$data)[[1]][,2]
-      values = (rv$data)[[1]][,3]
+      cmp = (rv$rawData)[[1]][,2]
+      values = (rv$rawData)[[1]][,3]
       clinDF = data.frame(CMP = cmp, Value = as.numeric(values))
       clinDF$CMP = as.character(clinDF$CMP)
     }
@@ -574,5 +563,5 @@ server <- function(input, output, session) {
     }
   )
 }
-
+# Running the App ------------------------------
 shinyApp(ui, server)
