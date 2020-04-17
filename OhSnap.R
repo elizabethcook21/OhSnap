@@ -202,8 +202,7 @@ ui <- fluidPage (
 server <- function(input, output, session) {
   # global variables ----------
   rv <- reactiveValues(data=NULL, rotate = NULL, rotatedImage = NULL, selectedTest = NULL, selectedSex = NULL, 
-                       selectedDataType = NULL, login = FALSE, currDF = NULL, newRow = NULL, 
-                       currDFPath = NULL, testDate = NULL,
+                       selectedDataType = NULL, login = FALSE, currDF = NULL, testDate = NULL,
                        readyToEditImages = FALSE, imageSize = NULL, originalImage = NULL)
   
   dataDescriptions = read_tsv("Data_Info.tsv")
@@ -277,11 +276,7 @@ server <- function(input, output, session) {
   })
   
   observeEvent(input$infile, {
-    
-    rv$currDFPath = input$infile$datapath
     rv$currDF <- read_excel(input$infile$datapath)
-    #file <- system.file("tests", "test_import.xlsx", package = "xlsx")
-    #res <- read.xlsx(file, 1)  # read first sheet
   })
   
   observeEvent(input$continueToUpload, {
@@ -453,46 +448,17 @@ server <- function(input, output, session) {
   })
   
   output$saveData <- downloadHandler(
-    # filename = paste0("OhSnap_", rv$selectedDataType, rv$testDate, ".xlsx"),
     filename = paste0("OhSnap_", rv$selectedTest, ".xlsx"),
     content = function(filePath) {
-      print(rv$selectedDataType)
-      print(rv$selectedTest)
       newData = as.vector(hot_to_r(input$verificationTable)[,2])
-      print("newdata")
-      print(newData)
-      print("rv$testDate")
-      print(rv$testDate)
-      rv$newRow = c(as.character(rv$testDate), newData)
-      print("rv$newRow")
-      print(rv$newRow)
+      newRow = c(0, newData)
       stored_col_names = colnames(rv$currDF) #store the colnames so they don't get overwritten
-      print("stored_col_names")
-      print(stored_col_names)
-      rv$currDF = rbind(rv$currDF, rv$newRow,stringsAsFactors = FALSE)
-      print(" rv$currDF")
-      print( rv$currDF)
+      rv$currDF$Date = as.character(rv$currDF$Date)
+      rv$currDF = rbind(rv$currDF, newRow, stringsAsFactors=FALSE)
+      rv$currDF$Date[length(rv$currDF$Date)] = as.character(rv$testDate)
       colnames(rv$currDF) = stored_col_names
-      print(" rv$currDF")
-      print( rv$currDF)
-      print("rv$currDFPath")
-      print(rv$currDFPath)
       write_xlsx(rv$currDF, filePath)
       rv$currDF = read_excel(filePath)
-      # print("the file that has been written out")
-      #print(read_xlsx(rv$currDFPath))
-      # files <- NULL
-      # for (i in 1:length(dataTypes)){
-      #   fileName <- paste(names(dataTypes[i]),".xlsx",sep = "")
-      #   data <- c("Date", dataTypes[[i]])
-      #   data <- rbind(data)
-      #   write_xlsx(as.data.frame(data), paste0(fileName), col_names = FALSE, format_headers = FALSE)
-      #   files <- c(fileName, files)
-      # }
-      # zip::zipr(file, files)
-      # if(file.exists(paste0(file, ".xlsx"))) {
-      #   file.rename(paste0(file, "xlsx"), file)
-      # }
     }
   )
   
@@ -575,7 +541,17 @@ server <- function(input, output, session) {
     if (length(info) > 2) {  # if normal range exists
       if (length(info) > 3) {  # if separate normal ranges exist for male and female
         adult = as.numeric(info[[rv$selectedSex]])
+        print("df")
+        print(df)
+        print("selectedDataType")
+        print(rv$selectedDataType)
+        print("adult")
+        print(adult)
+        print("pull df")
+        print(pull(df, rv$selecteDataType))
         min = floor(min(c(adult, pull(df, rv$selectedDataType))))
+        print("min")
+        print(min)
         max = ceiling(max(c(adult, pull(df, rv$selectedDataType))))
         incrementSize = getIncrementSize(min, max)
         fig = fig +
