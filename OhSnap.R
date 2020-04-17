@@ -17,10 +17,10 @@ library(writexl)
 library(tidyverse)
 
 # Global variables and functions ----------------
-options(googleAuthR.scopes.selected = c("https://www.googleapis.com/auth/userinfo.email",
-                                        "https://www.googleapis.com/auth/userinfo.profile"))
-options("googleAuthR.webapp.client_id" = "543814214955-9u26dmgeaoo8p03fna1gc11ond5md1ta.apps.googleusercontent.com")
-options("googleAuthR.webapp.client_secret" = "4mbPAzE7UFZjTFYGcjPS1MYS")
+#options(googleAuthR.scopes.selected = c("https://www.googleapis.com/auth/userinfo.email",
+#                                        "https://www.googleapis.com/auth/userinfo.profile"))
+#options("googleAuthR.webapp.client_id" = "543814214955-9u26dmgeaoo8p03fna1gc11ond5md1ta.apps.googleusercontent.com")
+#options("googleAuthR.webapp.client_secret" = "4mbPAzE7UFZjTFYGcjPS1MYS")
 
 #as adapted from 'image_ocr' in package:magick
 data_selection_ocr <- function (image, whitelist = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.-", HOCR = FALSE, ...) 
@@ -92,14 +92,14 @@ ui <- fluidPage (
                  br(),
                  actionButton("personal", label = "Store on Personal Computer"),
                  br(), br(),
-                 googleAuthUI("gauth_login"))   
+                 actionButton("gauth_login", label = "Login with Google", style="color: #fff; background-color: #337ab7; border-color: #2e6da4"))   
              ),
-             # * upload data tab ----------
+             # * upload image tab ----------
              tabPanel('Upload Image', value = 'uploadData',
                       sidebarLayout(
                         sidebarPanel(
                           tags$div(id = "headertitle",
-                                   tags$h2("Shiny Tesseract"),
+                                   tags$h2("Upload Image"),
                                    tags$div(id="tesseract")),
                           tags$div(
                             id = "header",
@@ -211,16 +211,16 @@ server <- function(input, output, session) {
   imageData <- NULL
   
   # Google Login Code -------------------------------------------------
-  accessToken <- callModule(googleAuth, "gauth_login",
-                            login_class = "btn btn-primary",
-                            logout_class = "btn btn-primary")
-  userDetails <- reactive({
-    validate(
-      need(accessToken(), "not logged in")
-    )
-    rv$login <- TRUE
-    with_shiny(get_user_info, shiny_access_token = accessToken())
-  })
+  # accessToken <- callModule(googleAuth, "gauth_login",
+  #                           login_class = "btn btn-primary",
+  #                           logout_class = "btn btn-primary")
+  # userDetails <- reactive({
+  #   validate(
+  #     need(accessToken(), "not logged in")
+  #   )
+  #   rv$login <- TRUE
+  #   with_shiny(get_user_info, shiny_access_token = accessToken())
+  # })
   
   userDetails <- reactive({
     validate(
@@ -230,13 +230,22 @@ server <- function(input, output, session) {
     with_shiny(get_user_info, shiny_access_token = accessToken())
   })
   
-  observe({
-    if (rv$login) {
-      shinyjs::onclick("gauth_login-googleAuthUi",
-                       shinyjs::runjs("window.location.href = 'https://yourdomain.shinyapps.io/appName';"))
-      print(googledrive::drive_find(""))
-    }
+  observeEvent(input$gauth_login, {
+    showModal(modalDialog(p("Future functionality! Please use personal data for now"),
+                          title = "Google Currently Disabled", footer = modalButton("Dismiss"),
+                          size = c("m", "s", "l"), easyClose = FALSE, fade = FALSE))
   })
+  
+  # observe({
+  #   if (rv$login) {
+  #     showModal(modalDialog(p("Future functionality! Please use personal data for now"),
+  #                           title = "Google Currently Disabled", footer = modalButton("Dismiss"),
+  #                            size = c("m", "s", "l"), easyClose = FALSE, fade = FALSE))
+  #     #shinyjs::onclick("gauth_login-googleAuthUi",
+  #     #                 shinyjs::runjs("window.location.href = 'https://yourdomain.shinyapps.io/appName';"))
+  #     #print(googledrive::drive_find(""))
+  #   }
+  # })
   
   # Personal Data Login Code
   observeEvent(input$personal, {
@@ -253,7 +262,13 @@ server <- function(input, output, session) {
                           p("Please select which type of test you are planning on uploading:"),
                           selectInput(inputId = "testType", label = "Tests:", choices = c("CBC (Complete Blood Count)", "CMP (Comprehensive Metabolic Panel)")),
                           p("Now, please navigate to the file you wish to have your data added to and put the path in the following text box:"),
-                          fileInput("infile", "Pleaseupload corresponding file", placeholder = "Browse for file"),
+                          fileInput("infile", "Pleaseupload corresponding file", placeholder = "Browse for file", accept=c('application/vnd.ms-excel',
+                                                                                                                           'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                                                                                                                           '.xls',
+                                                                                                                           '.xlsx',
+                                                                                                                           '.csv',
+                                                                                                                           '.tsv')
+                                    ),
                           footer = tagList(
                             actionButton("continueToUpload", "Continue")
                           ),
@@ -462,12 +477,23 @@ server <- function(input, output, session) {
   
   output$dataInfo = renderUI({
     if (rv$selectedTest == "CBC") {
-      HTML(paste("<strong>Complete Blood Count</strong><br/>",
-      dataDescriptions$Description[dataDescriptions$ID == "CBC"],
-      "<br/><br/><strong>", dataInfo[[rv$selectedDataType]]$def,
-      "</strong><br/>",  dataDescriptions$Description[dataDescriptions$ID == rv$selectedDataType],
-      "<br/><br/><strong>Normal Range(s)</strong><br/>",
-      dataDescriptions$Range[dataDescriptions$ID == rv$selectedDataType]))
+      HTML(paste0("<strong>Complete Blood Count</strong><br/>", 
+                 dataDescriptions$Description[dataDescriptions$ID == "CBC"],
+                 "<br/><a href='", dataDescriptions$Links[dataDescriptions$ID == "CBC"], "'>See more info</a>",
+                 "<br/><br/><strong>", dataInfo[[rv$selectedDataType]]$def, 
+                 "</strong><br/>",  dataDescriptions$Description[dataDescriptions$ID == rv$selectedDataType],
+                 "<br/><a href='", dataDescriptions$Links[dataDescriptions$ID == rv$selectedDataType], "'>See more info</a>",
+                 "<br/><br/><strong>Normal Range(s)</strong><br/>", 
+                 dataDescriptions$Range[dataDescriptions$ID == rv$selectedDataType]))
+    } else if (rv$selectedTest == "CMP") {
+      HTML(paste0("<strong>Comprehensive Metabolic Panel</strong><br/>", 
+                  dataDescriptions$Description[dataDescriptions$ID == "CMP"],
+                  "<br/><a href='", dataDescriptions$Links[dataDescriptions$ID == "CMP"], "'>See more info</a>",
+                  "<br/><br/><strong>", dataInfo[[rv$selectedDataType]]$def, 
+                  "</strong><br/>",  dataDescriptions$Description[dataDescriptions$ID == rv$selectedDataType],
+                  "<br/><a href='", dataDescriptions$Links[dataDescriptions$ID == rv$selectedDataType], "'>See more info</a>",
+                  "<br/><br/><strong>Normal Range(s)</strong><br/>", 
+                  dataDescriptions$Range[dataDescriptions$ID == rv$selectedDataType]))
     }
   })
   
