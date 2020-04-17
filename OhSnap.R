@@ -17,6 +17,8 @@ library(readxl)           #for reading from an existing excel file
 library(writexl)          #for writing the parsed data to an existing excel file
 library(tidyverse)        
 
+
+
 # Global variables and functions ------------------------------
 #options(googleAuthR.scopes.selected = c("https://www.googleapis.com/auth/userinfo.email",
 #                                        "https://www.googleapis.com/auth/userinfo.profile"))
@@ -66,11 +68,12 @@ dataInfo = list(# CBC types
                 CRE2 = list(def = "Creatinine", units = "mg/dL", adult = c(0.6, 1.3)),
                 `BN/CR` = list(def = "", units = "No units", adult = c(10, 20)))
 
-# UI ----------
+
+# UI ------------------------------
 ui <- fluidPage (
   tags$head(
     tags$link(rel = "stylesheet", type = "text/css", href = "style.css"),
-    tags$link(rel = "icon", type = "image/png", href = "Logo.png")
+    tags$link(rel = "icon", type = "image/png", href = "OhSnapLogo.png")
   ),
   useShinyjs(),
   #shinythemes::themeSelector(),
@@ -81,7 +84,7 @@ ui <- fluidPage (
                fluidRow(
                  align = "center",
                  br(), br(),
-                 tags$img(src = 'TempLogo.png', align = "center", height = "300px"),
+                 tags$img(src = 'OhSnapLogo.png', align = "center", height = "300px"),
                  br(),
                  actionButton("personal", label = "Store on Personal Computer"),
                  br(), br(),
@@ -190,19 +193,19 @@ ui <- fluidPage (
              )
   )
 )
+#Server  ------------------------------
 
-# Server ------------------------------
 server <- function(input, output, session) {
-  # global variables ----------
+  # * global variables ------------------------------
   rv <- reactiveValues(rawData=NULL, rotate = NULL, rotatedImage = NULL, selectedTest = NULL, selectedSex = NULL, 
                        selectedDataType = NULL, login = FALSE, currDF = NULL, testDate = NULL,
                        readyToEditImages = FALSE, imageSize = NULL, originalImage = NULL)
   
-  dataDescriptions = read_tsv("Data_Info.tsv")
-  image <- image_read("DefaultImage.png")
+  dataDescriptions = read_tsv("www/Data_Info.tsv")
+  image <- image_read("www/DefaultImage.png")
   imageData <- NULL
   
-  # Google Login Code -------------------------------------------------
+  # Google Login Code
   # accessToken <- callModule(googleAuth, "gauth_login",
   #                           login_class = "btn btn-primary",
   #                           logout_class = "btn btn-primary")
@@ -214,6 +217,7 @@ server <- function(input, output, session) {
   #   with_shiny(get_user_info, shiny_access_token = accessToken())
   # })
   
+  # * login tab ------------------------------
   userDetails <- reactive({
     validate(
       need(accessToken(), "not logged in")
@@ -296,7 +300,7 @@ server <- function(input, output, session) {
     }
   )
   
-  # upload data tab ------------
+  # * upload data tab ------------------------------
   observeEvent(input$upload, {
     if (length(input$upload$datapath)) {
       image <<- image_read(input$upload$datapath)
@@ -402,7 +406,7 @@ server <- function(input, output, session) {
     updateTabsetPanel(session, "tabs", selected = "verification")
   })
   
-  # verification tab --------- 
+  # * verification tab --------- 
   output$croppedImage = renderImage({
     croppedImg = image_crop(image, coords(), repage = FALSE)
     croppedImg = image_write(croppedImg, tempfile(fileext = 'jpg'), format = 'jpg') 
@@ -452,7 +456,7 @@ server <- function(input, output, session) {
     updateTabsetPanel(session, "tabs", selected = "graphs") #change from Verification tab to Graphical Display Tab
   }) 
   
-  # graphical display tab ----------
+  # * graphical display tab ------------------------------
   output$selectedDataType = renderUI({
     selectInput(inputId = "dataType", label = "Data Type:", choices = dataTypes[[rv$selectedTest]], selected = dataTypes[[rv$selectedTest]][1])
   })
@@ -563,5 +567,6 @@ server <- function(input, output, session) {
     }
   )
 }
+
 # Running the App ------------------------------
 shinyApp(ui, server)
