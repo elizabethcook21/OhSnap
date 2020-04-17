@@ -335,7 +335,6 @@ server <- function(input, output, session) {
   
   observeEvent(input$sexType, {
     rv$selectedSex = tolower(input$sexType)
-    print(rv$selectedSex)
   })
   
   observeEvent(input$testDate,{
@@ -397,14 +396,12 @@ server <- function(input, output, session) {
   observeEvent(input$image_brush,{
     #req(input$image_brush)
     image <- image
-    print('parsing text')
     text   <- image %>% 
       image_crop(coords(), repage = FALSE) %>%
       data_selection_ocr()#image_ocr()
     imageData <<- text
     selected_text <- text
     rv$data <- str_match_all(selected_text, "([A-Za-z-]+)[\\s-]*([0-9.]+)[^\n]*")
-    print(selected_text)
     return(selected_text)
   })
   
@@ -499,7 +496,6 @@ server <- function(input, output, session) {
   
   getIncrementSize = function(min, max) {
     diff = max - min
-    print(diff)
     if (between(diff, 0, 3)) {
       increment = 0.25
     } else if (between(diff, 4, 8)) {
@@ -541,17 +537,7 @@ server <- function(input, output, session) {
     if (length(info) > 2) {  # if normal range exists
       if (length(info) > 3) {  # if separate normal ranges exist for male and female
         adult = as.numeric(info[[rv$selectedSex]])
-        print("df")
-        print(df)
-        print("selectedDataType")
-        print(rv$selectedDataType)
-        print("adult")
-        print(adult)
-        print("pull df")
-        print(pull(df, rv$selecteDataType))
         min = floor(min(c(adult, pull(df, rv$selectedDataType))))
-        print("min")
-        print(min)
         max = ceiling(max(c(adult, pull(df, rv$selectedDataType))))
         incrementSize = getIncrementSize(min, max)
         fig = fig +
@@ -581,7 +567,6 @@ server <- function(input, output, session) {
     fig = ggplotly(fig, height = 600)
     return(fig)
   }
-  
   
   output$plot = renderPlotly(
     if (!is.null(rv$selectedDataType)) {
