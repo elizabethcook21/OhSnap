@@ -2,7 +2,7 @@
 # OhSnap!
 ## A private, user-customized health record tracking web application
 
-Authors (unordered, alphabetical): Elizabeth C. Anderson, Tyler Heaton, Ed Ringger, Erica Suh, under the direction of Dr. Samuel Payne
+Authors: Elizabeth C. Anderson, Tyler Heaton, Ed Ringger, Erica Suh, under the direction of Dr. Samuel Payne
 ### Brigham Young University
 April 2020
 
