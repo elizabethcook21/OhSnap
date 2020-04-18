@@ -17,8 +17,6 @@ library(readxl)           #for reading from an existing excel file
 library(writexl)          #for writing the parsed data to an existing excel file
 library(tidyverse)        
 
-
-
 # Global variables and functions ------------------------------
 #options(googleAuthR.scopes.selected = c("https://www.googleapis.com/auth/userinfo.email",
 #                                        "https://www.googleapis.com/auth/userinfo.profile"))
@@ -68,7 +66,6 @@ dataInfo = list(# CBC types
                 CRE2 = list(def = "Creatinine", units = "mg/dL", adult = c(0.6, 1.3)),
                 `BN/CR` = list(def = "", units = "No units", adult = c(10, 20)))
 
-
 # UI ------------------------------
 ui <- fluidPage (
   tags$head(
@@ -78,7 +75,7 @@ ui <- fluidPage (
   useShinyjs(),
   #shinythemes::themeSelector(),
   navbarPage(theme = shinytheme("flatly"), title = "OhSnap!", id = 'tabs',
-             # * login tab ----------
+             # * login tab ======== 
              tabPanel(
                title = "Login",  value = "login",
                fluidRow(
@@ -193,17 +190,16 @@ ui <- fluidPage (
              )
   )
 )
-#Server  ------------------------------
 
+#Server  ------------------------------
 server <- function(input, output, session) {
   # * global variables ------------------------------
   rv <- reactiveValues(rawData=NULL, rotate = NULL, rotatedImage = NULL, selectedTest = NULL, selectedSex = NULL, 
-                       selectedDataType = NULL, login = FALSE, currDF = NULL, testDate = NULL,
+                       selectedDataType = NULL, login = FALSE, userData = NULL, testDate = NULL,
                        readyToEditImages = FALSE, imageSize = NULL, originalImage = NULL)
   
   dataDescriptions = read_tsv("www/Data_Info.tsv")
   image <- image_read("www/DefaultImage.png")
-  imageData <- NULL
   
   # Google Login Code
   # accessToken <- callModule(googleAuth, "gauth_login",
@@ -272,7 +268,7 @@ server <- function(input, output, session) {
   })
   
   observeEvent(input$infile, {
-    rv$currDF <- read_excel(input$infile$datapath)
+    rv$userData <- read_excel(input$infile$datapath)
   })
   
   observeEvent(input$continueToUpload, {
@@ -287,7 +283,7 @@ server <- function(input, output, session) {
     content = function(file) {
       files <- NULL
       for (i in 1:length(dataTypes)){
-        fileName <- paste(names(dataTypes[i]),".xlsx",sep = "")
+        fileName <- paste0("OhSnap_", names(dataTypes[i]),".xlsx")
         data <- c("Date", dataTypes[[i]])
         data <- rbind(data)
         write_xlsx(as.data.frame(data), paste0(fileName), col_names = FALSE, format_headers = FALSE)
@@ -394,7 +390,8 @@ server <- function(input, output, session) {
     whitelistChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.-"
     restrictedTesseract = tesseract(options = list(tessedit_char_whitelist = whitelistChars))
     rawText = ocr(croppedImage, engine = restrictedTesseract, HOCR = FALSE)
-    rowPattern = "([A-Za-z-]+)[\\s-]*([0-9.]+)[^\n]*"
+    #we only care about the alphanumeric test label, and the numeric data, extracted in () ()
+    rowPattern = "([A-Za-z-]+)[\\s-]*([0-9.]*).*[^\n]*"
     rv$rawData <- str_match_all(rawText, rowPattern)
   })
   
@@ -406,7 +403,7 @@ server <- function(input, output, session) {
     updateTabsetPanel(session, "tabs", selected = "verification")
   })
   
-  # * verification tab --------- 
+  # * verification tab ------------------------------
   output$croppedImage = renderImage({
     croppedImg = image_crop(image, coords(), repage = FALSE)
     croppedImg = image_write(croppedImg, tempfile(fileext = 'jpg'), format = 'jpg') 
@@ -414,41 +411,34 @@ server <- function(input, output, session) {
   })
   
   output$referenceTable = renderRHandsontable({
-    expected_table = data.frame(Expected = (colnames(rv$currDF)[-1]))
+    expected_table = data.frame(Expected = (colnames(rv$userData)[-1]))
     expected_table$Expected = as.character(expected_table$Expected)
-    rhandsontable(expected_table,rowHeaders = NULL, width = 300)%>%
-      hot_col(col = "Expected", readOnly = TRUE) #make the reference table/column read only
+    displayTable = rhandsontable(expected_table,rowHeaders = NULL, width = 300)
+    hot_col(displayTable, col = "Expected", readOnly = TRUE) #make the reference table/column read only
   })
   
   output$verificationTable = renderRHandsontable({
-    if (input$testType == "CBC (Complete Blood Count)") {
-      cbc = (rv$rawData)[[1]][,2]
+      testNames = (rv$rawData)[[1]][,2]
       values = (rv$rawData)[[1]][,3]
-      clinDF = data.frame(CBC = cbc, Value = as.numeric(values))
-      clinDF$CBC = as.character(clinDF$CBC)
-    } else if (input$testType == "CMP (Comprehensive Metabolic Panel)") {
-      cmp = (rv$rawData)[[1]][,2]
-      values = (rv$rawData)[[1]][,3]
-      clinDF = data.frame(CMP = cmp, Value = as.numeric(values))
-      clinDF$CMP = as.character(clinDF$CMP)
-    }
-    if(!is.null(clinDF)) {
-      rhandsontable(clinDF, rowHeaders = NULL, width = 300)
+      formattedData = data.frame(TestName = testNames, Value = as.numeric(values))
+      formattedData$TestName = as.character(formattedData$TestName)
+    if(!is.null(formattedData)) {
+      rhandsontable(formattedData, rowHeaders = NULL, width = 300)
     }
   })
   
+  #when the user clicks the download button, append the new data to userData and write it to an excel file
   output$saveData <- downloadHandler(
     filename = paste0("OhSnap_", rv$selectedTest, ".xlsx"),
     content = function(filePath) {
-      newData = as.vector(hot_to_r(input$verificationTable)[,2])
-      newRow = c(0, newData)
-      stored_col_names = colnames(rv$currDF) #store the colnames so they don't get overwritten
-      rv$currDF$Date = as.character(rv$currDF$Date)
-      rv$currDF = rbind(rv$currDF, newRow, stringsAsFactors=FALSE)
-      rv$currDF$Date[length(rv$currDF$Date)] = as.character(rv$testDate)
-      colnames(rv$currDF) = stored_col_names
-      write_xlsx(rv$currDF, filePath)
-      rv$currDF = read_excel(filePath)
+      newData = as.vector(hot_to_r(input$verificationTable)[,2]) #extract the raw data from the handsontable
+      newRow = c(0, newData) #the new row is type numeric, so append 0 as a placeholder for the date
+      stored_col_names = colnames(rv$userData) #store the colnames so they don't get overwritten
+      rv$userData$Date = as.character(rv$userData$Date) #make userDatas Date column chars instead of Date objects
+      rv$userData = rbind(rv$userData, newRow, stringsAsFactors=FALSE)  #insert the row of data into userData
+      colnames(rv$userData) = stored_col_names #reset the column names, if they were overwritten
+      rv$userData$Date[length(rv$userData$Date)] = as.character(rv$testDate) #insert the date into the date column
+      write_xlsx(rv$userData, filePath)
     }
   )
   
@@ -506,7 +496,7 @@ server <- function(input, output, session) {
   }
   
   makePlot = function() {
-    df = select(rv$currDF, Date, UQ(as.name(rv$selectedDataType)))
+    df = select(rv$userData, Date, UQ(as.name(rv$selectedDataType)))
     df$Date = as.Date(df$Date)
     info = dataInfo[[rv$selectedDataType]]
     
