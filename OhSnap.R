@@ -97,7 +97,7 @@ ui <- fluidPage (
                           tags$div(
                             id = "header",
                             fileInput(
-                              "upload",
+                              "uploadImageButton",
                               "Upload image",
                               accept = c('image/png', 'image/jpeg'),
                               buttonLabel = "BROWSE",
@@ -262,7 +262,7 @@ server <- function(input, output, session) {
                                                                                                                            '.tsv')
                                     ),
                           footer = tagList(
-                            actionButton("continueToUpload", "Continue")
+                            actionButton("goToUploadTab", "Continue")
                           ),
                           size = "m", easyClose = FALSE))
   })
@@ -271,7 +271,7 @@ server <- function(input, output, session) {
     rv$userData <- read_excel(input$infile$datapath)
   })
   
-  observeEvent(input$continueToUpload, {
+  observeEvent(input$goToUploadTab, {
     removeModal()
     updateTabsetPanel(session, "tabs", selected = "uploadData")
   })
@@ -297,10 +297,10 @@ server <- function(input, output, session) {
   )
   
   # * upload data tab ------------------------------
-  observeEvent(input$upload, {
-    if (length(input$upload$datapath)) {
-      image <<- image_read(input$upload$datapath)
-      rv$originalImage <- image_read(input$upload$datapath)
+  observeEvent(input$uploadImageButton, {
+    if (length(input$uploadImageButton$datapath)) {
+      image <<- image_read(input$uploadImageButton$datapath)
+      rv$originalImage <- image_read(input$uploadImageButton$datapath)
       info   <- image_info(image)
       rv$imageSize =  paste(info$width, info$height, sep = "x")
       #updateTextInput(session, "size", value = paste(info$width, info$height, sep = "x"))
@@ -387,9 +387,10 @@ server <- function(input, output, session) {
   
   observeEvent(input$image_brush,{
     croppedImage = image_crop(image, coords(), repage = FALSE)
-    whitelistChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.-"
+    whitelistChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.- \n"
     restrictedTesseract = tesseract(options = list(tessedit_char_whitelist = whitelistChars))
     rawText = ocr(croppedImage, engine = restrictedTesseract, HOCR = FALSE)
+    altDf = ocr_data(croppedImage, engine = restrictedTesseract)
     #we only care about the alphanumeric test label, and the numeric data, extracted in () ()
     rowPattern = "([A-Za-z-]+)[\\s-]*([0-9.]*).*[^\n]*"
     rv$rawData <- str_match_all(rawText, rowPattern)
