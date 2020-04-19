@@ -1,20 +1,20 @@
 # Importing External Libraries ------------------------------
-library(shiny)            #for the overall structure/framework of the app
-library(shinydashboard)   #for the tab layout of the app
-library(shinyjs)          #for integrating packages like rhandsontable
+library(shiny)            # for the overall structure/framework of the app
+library(shinydashboard)   # for the tab layout of the app
+library(shinyjs)          # for integrating packages like rhandsontable
 library(shinycssloaders)  
-library(shinythemes)      #for styling the interface
-library(magick)           #for processing the image that the user uploads (size, orientation)
-library(tesseract)        #for automatic optical character recognition
-library(stringr)          #for parsing the text into a table with regular expressions
-library(rhandsontable)    #for the interactive table where the
-library(ggplot2)          #for creating the base plots of the data
-library(plotly)           #for making the plots interactive
-library(googleAuthR)      #for interacting with google authentication servers
-library(googlesheets4)    #for reading and writing google sheets
-library(zip)              #for downloading templates for the user to store their data in
-library(readxl)           #for reading from an existing excel file
-library(writexl)          #for writing the parsed data to an existing excel file
+library(shinythemes)      # for styling the interface
+library(magick)           # for processing the image that the user uploads (size, orientation)
+library(tesseract)        # for automatic optical character recognition
+library(stringr)          # for parsing the text into a table with regular expressions
+library(rhandsontable)    # for the interactive table where the
+library(ggplot2)          # for creating the base plots of the data
+library(plotly)           # for making the plots interactive
+library(googleAuthR)      # for interacting with google authentication servers
+library(googlesheets4)    # for reading and writing google sheets
+library(zip)              # for downloading templates for the user to store their data in
+library(readxl)           # for reading from an existing excel file
+library(writexl)          # for writing the parsed data to an existing excel file
 library(tidyverse)        
 
 # Global variables and functions ------------------------------
@@ -25,46 +25,6 @@ library(tidyverse)
 
 dataTypes = list(CBC = c("WBC", "RBC", "HGB", "HCT", "MCV", "MCH", "MCHC", "PLT", "RDW-SD", "RDW-CV", "MPV", "NEUT", "LYMPH", "MONO", "EO", "BASO"), 
                  CMP = c("Na", "K","Cl", "ECO2", "AGAP", "AHOL", "TBI", "TP", "GLOB", "ALPI","TGL", "CHOL", "AST", "ALTI", "ALB", "A/G", "GLUC", "BUN", "CA", "CRE2", "BN/CR"))
-
-dataInfo = list(# CBC types
-                WBC = list(def = "White Blood Cell Count", units = "10^3/uL", adult = c(4.5, 10)),
-                RBC = list(def = "Red Blood Cell Count",  units = "10^6/uL", male = c(4.5, 5.9), female = c(4.1, 5.1)),
-                HGB = list(def = "Hemoglobin", units = "g/dL", male = c(14, 17.5), female = c(12.3, 15.3)),
-                HCT = list(def = "Hematocrit", units = "%", male = c(41.5, 50.4), female = c(36.9, 44.6)),
-                MCV = list(def = "Mean Corpuscular Volume", units = "pg", adult = c(80, 96)),
-                MCH = list(def = "Mean Corpuscular Hemoglobin", units = "pg", adult = c(27, 33)),
-                MCHC = list(def = "Mean Corpuscular Hemoglobin Concentration", units = "g/dL", adult = c(31, 37)),
-                PLT = list(def = "Platelet Count", units = "10^3/uL", adult = c(150, 450)),
-                `RDW-SD` = list(def = "Red Blood Cell Distribution Width", units = "fL", adult = c(40, 55)),
-                `RDW-CV` = list(def = "Red Blood Cell Distribution Width", units = "%", adult = c(11, 15)),
-                MPV = list(def = "Mean Platelet Volume", units = "fL", adult = c(9.4, 12.3)),
-                NEUT = list(def = "Neutrophils", units = "%", adult = c(40, 60)),
-                LYMPH = list(def = "Lymphocytes", units = "%", adult = c(20, 40)),
-                MONO = list(def = "Monocytes", units = "%", adult = c(2, 8)),
-                EO = list(def = "Esinophils", units = "%", adult = c(1, 4)),
-                BASO = list(def = "Basophils", units = "%", adult = c(0.5, 1)),
-                # CMP types
-                Na = list(def = "Sodium", units = "mmol/L", adult = c(136, 145)),
-                K = list(def = "Potassium", units = "mmol/L", adult = c(3.5, 5.1)),
-                Cl = list(def = "Chloride", units = "mmol/L", adult = c(98, 107)),
-                ECO2 = list(def = "Carbon Dioxide", units = "mmol/L", adult = c(21, 32)),
-                AGAP = list(def = "Anion Gap", units = "mmol/L", adult = c(3, 10)),
-                AHDL = list(def = "High-Density Lipoprotein", units = "mg/dL", adult = c(40, 60)),
-                TBI = list(def = "Total Bilirubin", units = "mg/dL", adult = c(0.2, 1)),
-                TP = list(def = "Total Protein", units = "g/dL", adult = c(6.4, 8.2)),
-                GLOB = list(def = "Globulin", units = "g/dL", adult = c(2, 3.5)),
-                ALPI = list(def = "Alkaline Phosphatase", units = "units/L", adult = c(46, 116)),
-                TGL = list(def = "Triglycerides", units = "mg/dL", adult = c(30, 150)),
-                CHOL = list(def = "Cholesterol", units = "mg/dL", adult = c(0, 200)),
-                AST = list(def = "Aspartate Aminotransferase", units = "units/L", adult = c(15, 37)),
-                ALTI = list(def = "Alanine Aminotransferase", units = "units/L", adult = c(12, 78)),
-                ALB = list(def = "Albumin", units = "g/dL", adult = c(3.4, 5)),
-                `A/G` = list(def = "Albumin/Globulin Ratio", units = "No units"),
-                GLUC = list(def = "Glucose", units = "mg/dL", adult = c(74, 106)),
-                BUN = list(def = "Blood Urea Nitrogen", units = "mg/dL", adult = c(7, 18)),
-                CA = list(def = "Calcium", units = "mg/dL", adult = c(8.5, 10.1)),
-                CRE2 = list(def = "Creatinine", units = "mg/dL", adult = c(0.6, 1.3)),
-                `BN/CR` = list(def = "", units = "No units", adult = c(10, 20)))
 
 # UI ------------------------------
 ui <- fluidPage (
@@ -198,7 +158,7 @@ server <- function(input, output, session) {
                        selectedDataType = NULL, login = FALSE, userData = NULL, testDate = NULL,
                        readyToEditImages = FALSE, imageSize = NULL, originalImage = NULL)
   
-  dataDescriptions = read_tsv("www/Data_Info.tsv")
+  dataInfo = read_tsv("www/Data_Info.tsv")
   image <- image_read("www/DefaultImage.png")
   
   # Google Login Code
@@ -459,22 +419,22 @@ server <- function(input, output, session) {
   output$dataInfo = renderUI({
     if (rv$selectedTest == "CBC") {
       HTML(paste0("<strong>Complete Blood Count</strong><br/>", 
-                 dataDescriptions$Description[dataDescriptions$ID == "CBC"],
-                 "<br/><a href='", dataDescriptions$Links[dataDescriptions$ID == "CBC"], "'>See more info</a>",
-                 "<br/><br/><strong>", dataInfo[[rv$selectedDataType]]$def, 
-                 "</strong><br/>",  dataDescriptions$Description[dataDescriptions$ID == rv$selectedDataType],
-                 "<br/><a href='", dataDescriptions$Links[dataDescriptions$ID == rv$selectedDataType], "'>See more info</a>",
+                  dataInfo$Description[dataInfo$ID == "CBC"],
+                 "<br/><a href='", dataInfo$Links[dataInfo$ID == "CBC"], "'>See more info</a>",
+                 "<br/><br/><strong>", dataInfo$Title[dataInfo$ID == rv$selectedDataType], 
+                 "</strong><br/>",  dataInfo$Description[dataInfo$ID == rv$selectedDataType],
+                 "<br/><a href='", dataInfo$Links[dataInfo$ID == rv$selectedDataType], "'>See more info</a>",
                  "<br/><br/><strong>Normal Range(s)</strong><br/>", 
-                 dataDescriptions$Range[dataDescriptions$ID == rv$selectedDataType]))
+                 dataInfo$Range[dataInfo$ID == rv$selectedDataType]))
     } else if (rv$selectedTest == "CMP") {
       HTML(paste0("<strong>Comprehensive Metabolic Panel</strong><br/>", 
-                  dataDescriptions$Description[dataDescriptions$ID == "CMP"],
-                  "<br/><a href='", dataDescriptions$Links[dataDescriptions$ID == "CMP"], "'>See more info</a>",
-                  "<br/><br/><strong>", dataInfo[[rv$selectedDataType]]$def, 
-                  "</strong><br/>",  dataDescriptions$Description[dataDescriptions$ID == rv$selectedDataType],
-                  "<br/><a href='", dataDescriptions$Links[dataDescriptions$ID == rv$selectedDataType], "'>See more info</a>",
+                  dataInfo$Description[dataInfo$ID == "CMP"],
+                  "<br/><a href='", dataInfo$Links[dataInfo$ID == "CMP"], "'>See more info</a>",
+                  "<br/><br/><strong>",  dataInfo$Title[dataInfo$ID == rv$selectedDataType], 
+                  "</strong><br/>",  dataInfo$Description[dataInfo$ID == rv$selectedDataType],
+                  "<br/><a href='", dataInfo$Links[dataInfo$ID == rv$selectedDataType], "'>See more info</a>",
                   "<br/><br/><strong>Normal Range(s)</strong><br/>", 
-                  dataDescriptions$Range[dataDescriptions$ID == rv$selectedDataType]))
+                  dataInfo$Range[dataInfo$ID == rv$selectedDataType]))
     }
   })
   
@@ -499,16 +459,15 @@ server <- function(input, output, session) {
   makePlot = function() {
     df = select(rv$userData, Date, UQ(as.name(rv$selectedDataType)))
     df$Date = as.Date(df$Date)
-    info = dataInfo[[rv$selectedDataType]]
     
     # base plot
     fig = ggplot(df, aes(x = Date, y = UQ(as.name(rv$selectedDataType)))) +
       geom_point() +
       geom_line() +
       scale_x_date(date_labels = "%b %Y", date_breaks = "1 month") +
-      labs(title = paste0(rv$selectedTest, " - ", info$def, " (", rv$selectedDataType, ")"),
+      labs(title = paste0(rv$selectedTest, " - ", dataInfo$Title[dataInfo$ID == rv$selectedDataType], " (", rv$selectedDataType, ")"),
            x = "Date",
-           y = paste0(rv$selectedDataType, " (", info$units, ")")) +
+           y = paste0(rv$selectedDataType, " (", dataInfo$Units[dataInfo$ID == rv$selectedDataType], ")")) +
       theme_bw() +
       theme(plot.title = element_text(hjust = 0.5, size = 18),
             axis.title.x = element_text(size = 16),
@@ -518,24 +477,38 @@ server <- function(input, output, session) {
             axis.ticks.length = unit(.25, "cm"))
     
     # add normal ranges
-    if (length(info) > 2) {  # if normal range exists
-      if (length(info) > 3) {  # if separate normal ranges exist for male and female
-        adult = as.numeric(info[[rv$selectedSex]])
-        min = floor(min(c(adult, pull(df, rv$selectedDataType))))
-        max = ceiling(max(c(adult, pull(df, rv$selectedDataType))))
-        incrementSize = getIncrementSize(min, max)
-        fig = fig +
-          geom_hline(yintercept = adult[1], linetype = "dashed", color = "green") +
-          geom_hline(yintercept = adult[2], linetype = "dashed", color = "green") +
-          scale_y_continuous(limits = c(floor(min), ceiling(max)), 
-                             breaks = seq(floor(min), ceiling(max), by = incrementSize))
+    maleMin = dataInfo$M_Min[dataInfo$ID == rv$selectedDataType]
+    maleMax = dataInfo$M_Max[dataInfo$ID == rv$selectedDataType]
+    femaleMin = dataInfo$F_Min[dataInfo$ID == rv$selectedDataType]
+    femaleMax = dataInfo$F_Max[dataInfo$ID == rv$selectedDataType]
+    if (!is.na(maleMin) && !is.na(maleMax)) {  # if normal range exists
+      if (!is.na(femaleMin) && !is.na(femaleMax)) {  # if separate normal ranges exist for male and female
+        if (rv$selectedSex == "female") {
+          min = floor(min(c(femaleMin, pull(df, rv$selectedDataType))))
+          max = ceiling(max(c(femaleMax, pull(df, rv$selectedDataType))))
+          incrementSize = getIncrementSize(min, max)
+          fig = fig +
+            geom_hline(yintercept = femaleMin, linetype = "dashed", color = "green") +
+            geom_hline(yintercept = femaleMax, linetype = "dashed", color = "green") +
+            scale_y_continuous(limits = c(floor(min), ceiling(max)), 
+                               breaks = seq(floor(min), ceiling(max), by = incrementSize))
+        } else {
+          min = floor(min(c(maleMin, pull(df, rv$selectedDataType))))
+          max = ceiling(max(c(maleMax, pull(df, rv$selectedDataType))))
+          incrementSize = getIncrementSize(min, max)
+          fig = fig +
+            geom_hline(yintercept = maleMin, linetype = "dashed", color = "green") +
+            geom_hline(yintercept = maleMax, linetype = "dashed", color = "green", ) +
+            scale_y_continuous(limits = c(floor(min), ceiling(max)), 
+                               breaks = seq(floor(min), ceiling(max), by = incrementSize))
+        }
       } else {  # else if only general normal range exists with no specificity to sex
-        min = floor(min(c(as.numeric(info$adult[1]), pull(df, rv$selectedDataType))))
-        max = ceiling(max(c(as.numeric(info$adult[2]), pull(df, rv$selectedDataType))))
+        min = floor(min(c(maleMin, pull(df, rv$selectedDataType))))
+        max = ceiling(max(c(maleMax, pull(df, rv$selectedDataType))))
         incrementSize = getIncrementSize(min, max)
         fig = fig +
-          geom_hline(yintercept = min, linetype = "dashed", color = "green") +
-          geom_hline(yintercept = max, linetype = "dashed", color = "green", ) +
+          geom_hline(yintercept = maleMin, linetype = "dashed", color = "green") +
+          geom_hline(yintercept = maleMax, linetype = "dashed", color = "green", ) +
           scale_y_continuous(limits = c(floor(min), ceiling(max)), 
                              breaks = seq(floor(min), ceiling(max), by = incrementSize))
       }
