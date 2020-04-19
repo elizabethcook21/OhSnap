@@ -23,9 +23,6 @@ library(tidyverse)
 #options("googleAuthR.webapp.client_id" = "543814214955-9u26dmgeaoo8p03fna1gc11ond5md1ta.apps.googleusercontent.com")
 #options("googleAuthR.webapp.client_secret" = "4mbPAzE7UFZjTFYGcjPS1MYS")
 
-dataTypes = list(CBC = c("WBC", "RBC", "HGB", "HCT", "MCV", "MCH", "MCHC", "PLT", "RDW-SD", "RDW-CV", "MPV", "NEUT", "LYMPH", "MONO", "EO", "BASO"), 
-                 CMP = c("Na", "K","Cl", "ECO2", "AGAP", "AHOL", "TBI", "TP", "GLOB", "ALPI","TGL", "CHOL", "AST", "ALTI", "ALB", "A/G", "GLUC", "BUN", "CA", "CRE2", "BN/CR"))
-
 # UI ------------------------------
 ui <- fluidPage (
   tags$head(
@@ -159,6 +156,8 @@ server <- function(input, output, session) {
                        readyToEditImages = FALSE, imageSize = NULL, originalImage = NULL)
   
   dataInfo = read_tsv("www/Data_Info.tsv")
+  dataTypes = list(CBC = dataInfo$ID[dataInfo$Test == "CBC"], 
+                   CMP = dataInfo$ID[dataInfo$Test == "CMP"])
   image <- image_read("www/DefaultImage.png")
   
   # Google Login Code
