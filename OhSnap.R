@@ -17,7 +17,7 @@ library(readxl)           # for reading from an existing excel file
 library(writexl)          # for writing the parsed data to an existing excel file
 library(tidyverse)        
 
-# Global variables and functions ------------------------------
+# Global variables
 #options(googleAuthR.scopes.selected = c("https://www.googleapis.com/auth/userinfo.email",
 #                                        "https://www.googleapis.com/auth/userinfo.profile"))
 #options("googleAuthR.webapp.client_id" = "543814214955-9u26dmgeaoo8p03fna1gc11ond5md1ta.apps.googleusercontent.com")
