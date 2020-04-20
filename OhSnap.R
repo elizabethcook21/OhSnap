@@ -17,11 +17,6 @@ library(readxl)           # for reading from an existing excel file
 library(writexl)          # for writing the parsed data to an existing excel file
 library(tidyverse)        
 
-# Global variables and functions ------------------------------
-#options(googleAuthR.scopes.selected = c("https://www.googleapis.com/auth/userinfo.email",
-#                                        "https://www.googleapis.com/auth/userinfo.profile"))
-#options("googleAuthR.webapp.client_id" = "543814214955-9u26dmgeaoo8p03fna1gc11ond5md1ta.apps.googleusercontent.com")
-#options("googleAuthR.webapp.client_secret" = "4mbPAzE7UFZjTFYGcjPS1MYS")
 
 # UI ------------------------------
 ui <- fluidPage (
@@ -32,7 +27,7 @@ ui <- fluidPage (
   useShinyjs(),
   #shinythemes::themeSelector(),
   navbarPage(theme = shinytheme("flatly"), title = "OhSnap!", id = 'tabs',
-             # * login tab ======== 
+             # * login tab ----------
              tabPanel(
                title = "Login",  value = "login",
                fluidRow(
@@ -148,7 +143,7 @@ ui <- fluidPage (
   )
 )
 
-#Server  ------------------------------
+# Server ------------------------------
 server <- function(input, output, session) {
   # * global variables ------------------------------
   rv <- reactiveValues(rawData=NULL, rotate = NULL, rotatedImage = NULL, selectedTest = NULL, selectedSex = NULL, 
@@ -337,20 +332,13 @@ server <- function(input, output, session) {
     # "500x300+10+20" Crop image to 500 by 300 at position 10,20
   })
   
-  #output$coordstext <- renderText({
-  #  if (is.null(input$image_brush$xmin)) {
-  #    "No Area Selected!"
-  #  } else {
-  #    coords()}
-  #})
-  
   observeEvent(input$image_brush,{
     croppedImage = image_crop(image, coords(), repage = FALSE)
     whitelistChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.- \n"
     restrictedTesseract = tesseract(options = list(tessedit_char_whitelist = whitelistChars))
     rawText = ocr(croppedImage, engine = restrictedTesseract, HOCR = FALSE)
     altDf = ocr_data(croppedImage, engine = restrictedTesseract)
-    #we only care about the alphanumeric test label, and the numeric data, extracted in () ()
+    # we only care about the alphanumeric test label, and the numeric data, extracted in () ()
     rowPattern = "([A-Za-z-]+)[\\s-]*([0-9.]*).*[^\n]*"
     rv$rawData <- str_match_all(rawText, rowPattern)
   })
@@ -387,23 +375,23 @@ server <- function(input, output, session) {
     }
   })
   
-  #when the user clicks the download button, append the new data to userData and write it to an excel file
+  # when the user clicks the download button, append the new data to userData and write it to an excel file
   output$saveData <- downloadHandler(
     filename = paste0("OhSnap_", rv$selectedTest, ".xlsx"),
     content = function(filePath) {
-      newData = as.vector(hot_to_r(input$verificationTable)[,2]) #extract the raw data from the handsontable
-      newRow = c(0, newData) #the new row is type numeric, so append 0 as a placeholder for the date
-      stored_col_names = colnames(rv$userData) #store the colnames so they don't get overwritten
-      rv$userData$Date = as.character(rv$userData$Date) #make userDatas Date column chars instead of Date objects
-      rv$userData = rbind(rv$userData, newRow, stringsAsFactors=FALSE)  #insert the row of data into userData
-      colnames(rv$userData) = stored_col_names #reset the column names, if they were overwritten
-      rv$userData$Date[length(rv$userData$Date)] = as.character(rv$testDate) #insert the date into the date column
+      newData = as.vector(hot_to_r(input$verificationTable)[,2]) # extract the raw data from the handsontable
+      newRow = c(0, newData) # the new row is type numeric, so append 0 as a placeholder for the date
+      stored_col_names = colnames(rv$userData) # store the colnames so they don't get overwritten
+      rv$userData$Date = as.character(rv$userData$Date) # make userDatas Date column chars instead of Date objects
+      rv$userData = rbind(rv$userData, newRow, stringsAsFactors=FALSE)  # insert the row of data into userData
+      colnames(rv$userData) = stored_col_names # reset the column names, if they were overwritten
+      rv$userData$Date[length(rv$userData$Date)] = as.character(rv$testDate) # insert the date into the date column
       write_xlsx(rv$userData, filePath)
     }
   )
   
   observeEvent(input$goToGraphsTab, {
-    updateTabsetPanel(session, "tabs", selected = "graphs") #change from Verification tab to Graphical Display Tab
+    updateTabsetPanel(session, "tabs", selected = "graphs") # change from Verification tab to Graphical Display Tab
   }) 
   
   # * graphical display tab ------------------------------
@@ -415,6 +403,7 @@ server <- function(input, output, session) {
     rv$selectedDataType = input$dataType
   })
   
+  # fill in description and links in side panel
   output$dataInfo = renderUI({
     if (rv$selectedTest == "CBC") {
       HTML(paste0("<strong>Complete Blood Count</strong><br/>", 
@@ -437,6 +426,7 @@ server <- function(input, output, session) {
     }
   })
   
+  # customize how much x-axis tick marks increment by depending on diff between min and max
   getIncrementSize = function(min, max) {
     diff = max - min
     if (between(diff, 0, 3)) {
@@ -455,6 +445,7 @@ server <- function(input, output, session) {
     return(increment)
   }
   
+  # create plot
   makePlot = function() {
     df = select(rv$userData, Date, UQ(as.name(rv$selectedDataType)))
     df$Date = as.Date(df$Date)
@@ -475,13 +466,13 @@ server <- function(input, output, session) {
             axis.text.y = element_text(size = 12, margin = margin(l = 15)),
             axis.ticks.length = unit(.25, "cm"))
     
-    # add normal ranges
+    # add health ranges
     maleMin = dataInfo$M_Min[dataInfo$ID == rv$selectedDataType]
     maleMax = dataInfo$M_Max[dataInfo$ID == rv$selectedDataType]
     femaleMin = dataInfo$F_Min[dataInfo$ID == rv$selectedDataType]
     femaleMax = dataInfo$F_Max[dataInfo$ID == rv$selectedDataType]
-    if (!is.na(maleMin) && !is.na(maleMax)) {  # if normal range exists
-      if (!is.na(femaleMin) && !is.na(femaleMax)) {  # if separate normal ranges exist for male and female
+    if (!is.na(maleMin) && !is.na(maleMax)) {  # if range exists
+      if (!is.na(femaleMin) && !is.na(femaleMax)) {  # if separate ranges exist for male and female
         if (rv$selectedSex == "female") {
           min = floor(min(c(femaleMin, pull(df, rv$selectedDataType))))
           max = ceiling(max(c(femaleMax, pull(df, rv$selectedDataType))))
@@ -501,7 +492,7 @@ server <- function(input, output, session) {
             scale_y_continuous(limits = c(floor(min), ceiling(max)), 
                                breaks = seq(floor(min), ceiling(max), by = incrementSize))
         }
-      } else {  # else if only general normal range exists with no specificity to sex
+      } else {  # else if only general range exists with no specificity to sex
         min = floor(min(c(maleMin, pull(df, rv$selectedDataType))))
         max = ceiling(max(c(maleMax, pull(df, rv$selectedDataType))))
         incrementSize = getIncrementSize(min, max)
@@ -511,7 +502,7 @@ server <- function(input, output, session) {
           scale_y_continuous(limits = c(floor(min), ceiling(max)), 
                              breaks = seq(floor(min), ceiling(max), by = incrementSize))
       }
-    } else {  # else if no normal range exists
+    } else {  # else if no range exists
       min = floor(min(df[rv$selectedDataType]))
       max = ceiling(max(df[rv$selectedDataType]))
       incrementSize = getIncrementSize(min, max)
