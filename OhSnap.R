@@ -95,7 +95,7 @@ ui <- fluidPage (
                title = "Verification", value = "verification",
                sidebarLayout(
                  sidebarPanel(h2("Verification"),
-                              imageOutput("croppedImage"),
+                              imageOutput("croppedImage", height = "auto"),
                               br(),
                               downloadButton("saveData", "Save to Spreadsheet"),
                               br(),
