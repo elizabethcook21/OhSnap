@@ -30,7 +30,6 @@ ui <- fluidPage (
     tags$link(rel = "icon", type = "image/png", href = "OhSnapLogo.png")
   ),
   useShinyjs(),
-  #shinythemes::themeSelector(),
   navbarPage(theme = shinytheme("flatly"), title = "OhSnap!", id = 'tabs',
              # * login tab ----------
              tabPanel(
