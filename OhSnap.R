@@ -261,13 +261,11 @@ server <- function(input, output, session) {
       rv$originalImage <- image_read(input$uploadImageButton$datapath)
       info   <- image_info(image)
       rv$imageSize =  paste(info$width, info$height, sep = "x")
-      #updateTextInput(session, "size", value = paste(info$width, info$height, sep = "x"))
     }
     
     output$imageEditing <- renderUI({
       rv$readyToEditImages = TRUE
-      tagList(
-        #textInput("size", "Size", value = "200x400"),                                    
+      tagList(                                   
         sliderInput("imageSizeSlider", label = "Change Image Size", min = 25, max = 200, value = 100),
         br(),
         actionButton("rotateButton", "Rotate Clockwise 90\u00b0",
